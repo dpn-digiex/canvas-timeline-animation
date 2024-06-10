@@ -1,15 +1,56 @@
 import { Stage, Layer, Rect } from "react-konva";
 import { useEffect, useState, useRef } from "react";
-import { easings,useSpring,animated } from "@react-spring/konva";
-import useAnimation from "./useAnimation";
+import { easings, useSpring, animated } from "@react-spring/konva";
 import Whammy from "react-whammy";
 
-const totalTime = 3000;
+const totalTime = 5000;
 const FPS = 30;
 const INTERVAL_DURATION_MS = 1000 / FPS;
+const COLORS = ["royalblue", "crimson", "forestgreen", "orange", "purple", "teal", "brown", "pink", "yellow", "cyan"];
+const ITEMS_LENGTH = 50;
+const DELAY = 50;
+
+const getRandomPosition = (existingPositions, width = 500, height = 500, size = 50) => {
+  let x, y;
+  do {
+    x = Math.floor(Math.random() * (width - size));
+    y = Math.floor(Math.random() * (height - size));
+  } while (existingPositions.some(pos => Math.abs(pos.x - x) < size && Math.abs(pos.y - y) < size));
+  return { x, y };
+};
+
+const createComplexAnimation = (index, pos) => {
+  const baseConfig = {
+    duration: 2000,
+    easing: easings.easeInBack,
+  };
+
+  if (index % 3 === 0) {
+    return {
+      from: { x: pos.x, y: pos.y, opacity: 0 },
+      to: { x: pos.x + 300, y: pos.y + 300, opacity: 1 },
+      config: baseConfig,
+      delay: index * DELAY,
+    };
+  } else if (index % 3 === 1) {
+    return {
+      from: { x: pos.x, y: pos.y },
+      to: { x: pos.x - 200, y: pos.y - 200 },
+      config: baseConfig,
+      delay: index * DELAY,
+    };
+  } else {
+    return {
+      from: { x: pos.x, y: pos.y },
+      to: { x: pos.x + 150, y: pos.y - 150 },
+      config: baseConfig,
+      delay: index * DELAY,
+    };
+  }
+};
 
 const CanvasCapture = () => {
-  const [playAnimation, setPlayAnimation] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [frameCount, setFrameCount] = useState(0);
 
@@ -17,64 +58,73 @@ const CanvasCapture = () => {
   const framesRef = useRef([]);
   const frameId = useRef(null);
 
-  // const {
-  //   value: x,
-  //   play,
-  //   stop,
-  //   pause,
-  //   resume,
-  //   reset,
-  // } = useAnimation({
-  //   from: 100,
-  //   to: 400,
-  //   duration: 2000,
-  //   easing: easings.easeInBounce,
-  // });
+  const positions = Array.from({ length: ITEMS_LENGTH }, () => getRandomPosition([]));
 
-  const [{ x }, api] = useSpring(() => ({
-    from: { x: 100 },
-    to: { x: 400 },
+  const animations = positions.map((pos, index) => useSpring(() => ({
     pause: true,
     reset: true,
-  }));
+    ...createComplexAnimation(index, pos),
+  })));
 
   const startCapture = () => {
-    setPlayAnimation(true);
+    setIsCapturing(true);
     setElapsedTime(0);
     setFrameCount(0);
-    api.start({
-      from: { x: 100 },
-      to: { x: 400 },
-      config: {
-        duration: 2000,
-      }
+    framesRef.current = [];
+
+    animations.forEach(([_, api], index) => {
+      const pos = positions[index];
+      api.start({
+        pause: true,
+        reset: true,
+        ...createComplexAnimation(index, pos),
+        onPause: () => console.log("Paused at", elapsedTime + "ms"),
+      });
+    });
+  };
+
+  const startWithoutCapture = () => {
+    animations.forEach(([_, api], index) => {
+      const pos = positions[index];
+      api.start({
+        pause: true,
+        reset: true,
+        ...createComplexAnimation(index, pos),
+      });
     });
   };
 
   useEffect(() => {
-    if (playAnimation) {
-      if (frameId.current) cancelAnimationFrame(frameId.current);
-
+    if (isCapturing) {
       const captureAndAdvance = async () => {
         if (elapsedTime < totalTime) {
+          await captureFrame(layerRef.current);
           setElapsedTime((prev) => +(prev + INTERVAL_DURATION_MS).toFixed(0));
-          await captureFrame(layerRef.current).then(() => {
-            api.resume();
-            setFrameCount((frameCount) => frameCount + 1);
-          });
+          setFrameCount((frameCount) => frameCount + 1);
+          animations.forEach(([_, api]) => api.resume());
         } else {
           console.log("Completed capturing frames", framesRef.current.length);
-          // downloadVideo(framesRef.current, "video.webm");
+          downloadVideo(framesRef.current, "video.webm");
+          setIsCapturing(false);
         }
       };
+
       frameId.current = requestAnimationFrame(captureAndAdvance);
       return () => cancelAnimationFrame(frameId.current);
     }
-  }, [playAnimation, frameCount]);
+  }, [isCapturing, frameCount]);
 
-  const captureFrame = async (canvas: any) => {
+  useEffect(() => {
+    if (isCapturing && elapsedTime < totalTime) {
+      frameId.current = requestAnimationFrame(() => setFrameCount((frameCount) => frameCount + 1));
+    }
+  }, [elapsedTime]);
+
+  const captureFrame = async (canvas) => {
     return new Promise((resolve) => {
-      api.pause();
+      animations.forEach(([_, api]) => api.pause());
+      console.log("Paused at", elapsedTime + "ms");
+
       const frame = canvas.toDataURL({ mimeType: "image/webp" });
       framesRef.current.push(frame);
       resolve();
@@ -85,7 +135,7 @@ const CanvasCapture = () => {
     return new Promise((resolve, reject) => {
       try {
         const whammy = new Whammy.Video(fps);
-        const imagePromises = frames.map((frame, index) => {
+        const imagePromises = frames.map((frame) => {
           return new Promise((resolve, reject) => {
             if (typeof frame === "string" && frame.startsWith("data:image/")) {
               resolve(frame);
@@ -138,16 +188,30 @@ const CanvasCapture = () => {
 
   return (
     <div className="CanvasBoard" style={{ marginLeft: 30, marginTop: 30 }}>
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 4 }}>
         <button onClick={startCapture}>Start Capture</button>
-        <button onClick={api.reset}>Reset Animation</button>
+        <button onClick={startWithoutCapture}>Start Without Capture</button>
+        <button onClick={() => animations.forEach(([_, api], index) => api.set({ x: positions[index].x, y: positions[index].y, opacity: 1 }))}>Reset Animation</button>
       </div>
-      <div>{}</div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <div>{elapsedTime}ms/{totalTime}ms</div>
+        <div>Frame Count: {frameCount}</div>
+      </div>
 
       <Stage width={500} height={500}>
         <Layer ref={layerRef}>
           <Rect width={500} height={500} fill={"#efefef"} />
-          <animated.Rect x={x} y={100} width={50} height={50} fill="royalblue" />
+          {animations.map(([props], index) => (
+            <animated.Rect
+              key={index}
+              x={props.x}
+              y={props.y}
+              opacity={props.opacity}
+              width={50}
+              height={50}
+              fill={COLORS[index % COLORS.length]}
+            />
+          ))}
         </Layer>
       </Stage>
     </div>
