@@ -3,6 +3,7 @@ import { Stage, Layer, Circle, Rect, Image, Group } from "react-konva";
 import { gsap } from "gsap";
 import Whammy from "react-whammy";
 import useImage from "use-image";
+import { getAnimationConfig } from "./animation/config";
 
 const totalTime = 5;
 const FPS = 30;
@@ -61,8 +62,9 @@ const GROUP_IMAGE_ATTRS_02 = {
   y: 200,
   width: IMAGE_WIDTH_ELEMENT,
   height: IMAGE_HEIGHT_ELEMENT,
-  cropX: 600,
-  cropY: 200,
+  cropX: 0,
+  cropY: 0,
+  offsetY: 0,
   cropWidth: IMAGE_WIDTH_ELEMENT,
   cropHeight: IMAGE_HEIGHT_ELEMENT,
 };
@@ -70,6 +72,7 @@ const CanvasGsap = () => {
   const [progress, setProgress] = useState(0);
   const [isCapturing, setIsCapturing] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [direction, setDirection] = useState("direction_up");
 
   const layerRef = useRef(null);
   const framesRef = useRef([]);
@@ -226,39 +229,39 @@ const CanvasGsap = () => {
   };
 
   const addAnimationTimeline = () => {
-    tl.to(CIRCLE_ATTRS_01, {
-      y: CIRCLE_ATTRS_01.y + DISTANCE,
-      duration: DURATION,
-      ease: "back.in",
-      onUpdate: () => {
-        if (circle1Ref.current) {
-          circle1Ref.current.y(CIRCLE_ATTRS_01.y);
-          circle1Ref.current.getLayer().batchDraw();
-        }
-      },
-    });
-    tl.to(CIRCLE_ATTRS_02, {
-      x: CIRCLE_ATTRS_02.x + DISTANCE,
-      duration: DURATION,
-      ease: "circ.out",
-      onUpdate: () => {
-        if (circle2Ref.current) {
-          circle2Ref.current.x(CIRCLE_ATTRS_02.x);
-          circle2Ref.current.getLayer().batchDraw();
-        }
-      },
-    });
-    tl.to(CIRCLE_ATTRS_03, {
-      y: CIRCLE_ATTRS_03.y + DISTANCE,
-      duration: DURATION,
-      ease: "expo.inOut",
-      onUpdate: () => {
-        if (circle3Ref.current) {
-          circle3Ref.current.y(CIRCLE_ATTRS_03.y);
-          circle3Ref.current.getLayer().batchDraw();
-        }
-      },
-    });
+    // tl.to(CIRCLE_ATTRS_01, {
+    //   y: CIRCLE_ATTRS_01.y + DISTANCE,
+    //   duration: DURATION,
+    //   ease: "back.in",
+    //   onUpdate: () => {
+    //     if (circle1Ref.current) {
+    //       circle1Ref.current.y(CIRCLE_ATTRS_01.y);
+    //       circle1Ref.current.getLayer().batchDraw();
+    //     }
+    //   },
+    // });
+    // tl.to(CIRCLE_ATTRS_02, {
+    //   x: CIRCLE_ATTRS_02.x + DISTANCE,
+    //   duration: DURATION,
+    //   ease: "circ.out",
+    //   onUpdate: () => {
+    //     if (circle2Ref.current) {
+    //       circle2Ref.current.x(CIRCLE_ATTRS_02.x);
+    //       circle2Ref.current.getLayer().batchDraw();
+    //     }
+    //   },
+    // });
+    // tl.to(CIRCLE_ATTRS_03, {
+    //   y: CIRCLE_ATTRS_03.y + DISTANCE,
+    //   duration: DURATION,
+    //   ease: "expo.inOut",
+    //   onUpdate: () => {
+    //     if (circle3Ref.current) {
+    //       circle3Ref.current.y(CIRCLE_ATTRS_03.y);
+    //       circle3Ref.current.getLayer().batchDraw();
+    //     }
+    //   },
+    // });
 
     tl.fromTo(
       GROUP_IMAGE_ATTRS_01,
@@ -287,22 +290,57 @@ const CanvasGsap = () => {
         },
       }
     );
+    // tl.fromTo(
+    //   GROUP_IMAGE_ATTRS_02,
+    //   {
+    //     height: 0,
+    //     offsetY: GROUP_IMAGE_ATTRS_02.height,
+    //     cropY: GROUP_IMAGE_ATTRS_02.cropHeight,
+    //   },
+    //   {
+    //     height: GROUP_IMAGE_ATTRS_02.height,
+    //     cropY: 0,
+    //     offsetY: 0,
+    //     duration: DURATION,
+    //     ease: "expo.out",
+    //     onUpdate: () => {
+    //       console.log(GROUP_IMAGE_ATTRS_02.height);
+    //       if (groupImage2Ref.current) {
+    //         groupImage2Ref.current.offsetY(GROUP_IMAGE_ATTRS_02.offsetY);
+    //         groupImage2Ref.current.height(GROUP_IMAGE_ATTRS_02.height);
+
+    //         groupImage2Ref.current.setAttrs({
+    //           clipFunc: (ctx) => {
+    //             ctx.rect(
+    //               GROUP_IMAGE_ATTRS_02.cropX,
+    //               GROUP_IMAGE_ATTRS_02.cropY,
+    //               GROUP_IMAGE_ATTRS_02.cropWidth,
+    //               GROUP_IMAGE_ATTRS_02.cropHeight
+    //             );
+    //           },
+    //         });
+    //         groupImage2Ref.current.getLayer().batchDraw();
+    //       }
+    //     },
+    //   }
+    // );
     tl.fromTo(
       GROUP_IMAGE_ATTRS_02,
       {
-        y: GROUP_IMAGE_ATTRS_02.y + GROUP_IMAGE_ATTRS_02.height,
-        cropY: GROUP_IMAGE_ATTRS_02.cropY + GROUP_IMAGE_ATTRS_02.cropHeight,
+        ...getAnimationConfig("baseline", GROUP_IMAGE_ATTRS_02, {
+          direction: direction,
+        })?.from,
       },
       {
-        y: 0,
-        cropY: GROUP_IMAGE_ATTRS_02.cropY,
+        ...getAnimationConfig("baseline", GROUP_IMAGE_ATTRS_02, {
+          direction: direction,
+        })?.to,
         duration: DURATION,
         ease: "expo.out",
         onUpdate: () => {
-          console.log(GROUP_IMAGE_ATTRS_02.y);
-
           if (groupImage2Ref.current) {
-            groupImage2Ref.current.y(GROUP_IMAGE_ATTRS_02.y);
+            groupImage2Ref.current.offsetY(GROUP_IMAGE_ATTRS_02.offsetY);
+            groupImage2Ref.current.height(GROUP_IMAGE_ATTRS_02.height);
             groupImage2Ref.current.setAttrs({
               clipFunc: (ctx) => {
                 ctx.rect(
@@ -334,6 +372,15 @@ const CanvasGsap = () => {
         <button onClick={playAnimation}>Play</button>
         <button onClick={resetAnimation}>Reset</button>
         <button onClick={startCapture}>Start Capture</button>
+        <select
+          defaultValue={direction}
+          onChange={(e) => setDirection(e.target.value)}
+        >
+          <option value="direction_left">left</option>
+          <option value="direction_right">right</option>
+          <option value="direction_down">down</option>
+          <option value="direction_up">up</option>
+        </select>
       </div>
       <div style={{ marginTop: 20 }}>
         <h4>Timeline Control:</h4>
@@ -362,18 +409,26 @@ const CanvasGsap = () => {
             radius={50}
             fill="red"
           />
-          <Circle
-            ref={circle3Ref}
-            {...CIRCLE_ATTRS_03}
-            radius={50}
-            fill="green"
-          />
+          <Group>
+            <Circle
+              ref={circle3Ref}
+              {...CIRCLE_ATTRS_03}
+              radius={50}
+              fill="green"
+            />
+          </Group>
 
           <Group ref={groupImage1Ref}>
             <Image {...IMAGE_ATTRS_01} image={image} />
           </Group>
-          <Group ref={groupImage2Ref}>
-            <Image {...IMAGE_ATTRS_02} image={image2} />
+          <Group {...GROUP_IMAGE_ATTRS_02} clipY={50} ref={groupImage2Ref}>
+            <Image
+              width={GROUP_IMAGE_ATTRS_02.width}
+              height={GROUP_IMAGE_ATTRS_02.height}
+              x={0}
+              y={0}
+              image={image2}
+            />
           </Group>
         </Layer>
       </Stage>
