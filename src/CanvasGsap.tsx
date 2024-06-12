@@ -1,7 +1,9 @@
-import { useRef, useEffect, useState } from 'react';
-import { Stage, Layer, Circle, Rect, Image } from 'react-konva';
-import { gsap } from 'gsap';
+import { useRef, useEffect, useState } from "react";
+import { Stage, Layer, Circle, Rect, Image, Group } from "react-konva";
+import { gsap } from "gsap";
 import Whammy from "react-whammy";
+import Konva from "konva";
+import useImage from "use-image";
 
 const totalTime = 5;
 const FPS = 30;
@@ -15,10 +17,45 @@ const HEIGHT = 1080;
 const WIDTH_ELEMENT = 100;
 const HEIGHT_ELEMENT = 100;
 
-const CIRCLE_ATTRS_01 = { x: 100, y: 100, width: WIDTH_ELEMENT, height: HEIGHT_ELEMENT };
-const CIRCLE_ATTRS_02 = { x: 300, y: 150, width: WIDTH_ELEMENT, height: HEIGHT_ELEMENT };
-const CIRCLE_ATTRS_03 = { x: 500, y: 200, width: WIDTH_ELEMENT, height: HEIGHT_ELEMENT };
+const IMAGE_WIDTH_ELEMENT = 500;
+const IMAGE_HEIGHT_ELEMENT = 500;
 
+const CIRCLE_ATTRS_01 = {
+  x: 100,
+  y: 100,
+  width: WIDTH_ELEMENT,
+  height: HEIGHT_ELEMENT,
+};
+const CIRCLE_ATTRS_02 = {
+  x: 300,
+  y: 150,
+  width: WIDTH_ELEMENT,
+  height: HEIGHT_ELEMENT,
+};
+const CIRCLE_ATTRS_03 = {
+  x: 500,
+  y: 200,
+  width: WIDTH_ELEMENT,
+  height: HEIGHT_ELEMENT,
+};
+const CIRCLE_ATTRS_04 = {
+  x: 800,
+  y: 200,
+  width: WIDTH_ELEMENT,
+  height: HEIGHT_ELEMENT,
+};
+const IMAGE_ATTRS_01 = {
+  x: 200,
+  y: 200,
+  width: IMAGE_WIDTH_ELEMENT,
+  height: IMAGE_HEIGHT_ELEMENT,
+};
+const GROUP_IMAGE_ATTRS_01 = {
+  cropX: 200,
+  cropY: 200,
+  cropWidth: IMAGE_WIDTH_ELEMENT,
+  cropHeight: IMAGE_HEIGHT_ELEMENT,
+};
 const CanvasGsap = () => {
   const [progress, setProgress] = useState(0);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -31,6 +68,12 @@ const CanvasGsap = () => {
   const circle1Ref = useRef(null);
   const circle2Ref = useRef(null);
   const circle3Ref = useRef(null);
+  const circle4Ref = useRef(null);
+  const groupImage1Ref = useRef(null);
+
+  const [image] = useImage(
+    "https://lumiere-a.akamaihd.net/v1/images/darth-vader-main_4560aff7.jpeg?region=71%2C0%2C1139%2C854"
+  );
 
   const tl = useRef(gsap.timeline({ paused: true })).current;
 
@@ -122,10 +165,13 @@ const CanvasGsap = () => {
 
   const captureFrame = async (canvas) => {
     return new Promise((resolve) => {
-      const seekTime = +(elapsedTime * tl.duration() / totalTimeAnime).toFixed(2);
+      const seekTime = +(
+        (elapsedTime * tl.duration()) /
+        totalTimeAnime
+      ).toFixed(2);
       if (seekTime <= totalTime) {
         tl.seek(seekTime, false); // Seek to the specific time without playing
-      console.log("seeking to: ", seekTime, `/${totalTime}`);
+        console.log("seeking to: ", seekTime, `/${totalTime}`);
       }
       const frame = canvas.toDataURL({ mimeType: "image/png" });
       framesRef.current.push(frame);
@@ -170,7 +216,7 @@ const CanvasGsap = () => {
     tl.to(CIRCLE_ATTRS_01, {
       y: CIRCLE_ATTRS_01.y + DISTANCE,
       duration: DURATION,
-      ease: 'back.in',
+      ease: "back.in",
       onUpdate: () => {
         if (circle1Ref.current) {
           circle1Ref.current.y(CIRCLE_ATTRS_01.y);
@@ -181,7 +227,7 @@ const CanvasGsap = () => {
     tl.to(CIRCLE_ATTRS_02, {
       x: CIRCLE_ATTRS_02.x + DISTANCE,
       duration: DURATION,
-      ease: 'circ.out',
+      ease: "circ.out",
       onUpdate: () => {
         if (circle2Ref.current) {
           circle2Ref.current.x(CIRCLE_ATTRS_02.x);
@@ -192,7 +238,7 @@ const CanvasGsap = () => {
     tl.to(CIRCLE_ATTRS_03, {
       y: CIRCLE_ATTRS_03.y + DISTANCE,
       duration: DURATION,
-      ease: 'expo.inOut',
+      ease: "expo.inOut",
       onUpdate: () => {
         if (circle3Ref.current) {
           circle3Ref.current.y(CIRCLE_ATTRS_03.y);
@@ -200,7 +246,37 @@ const CanvasGsap = () => {
         }
       },
     });
-  }
+
+    tl.fromTo(
+      GROUP_IMAGE_ATTRS_01,
+      {
+        cropY: GROUP_IMAGE_ATTRS_01.cropY + GROUP_IMAGE_ATTRS_01.cropHeight,
+      },
+      {
+        cropY: GROUP_IMAGE_ATTRS_01.cropY,
+        duration: DURATION,
+        ease: "expo.out",
+        onUpdate: () => {
+          console.log(GROUP_IMAGE_ATTRS_01.cropY);
+
+          if (groupImage1Ref.current) {
+            // groupImage1Ref.current.cropX(GROUP_IMAGE_ATTRS_01.cropX);
+            groupImage1Ref.current.setAttrs({
+              clipFunc: (ctx) => {
+                ctx.rect(
+                  GROUP_IMAGE_ATTRS_01.cropX,
+                  GROUP_IMAGE_ATTRS_01.cropY,
+                  GROUP_IMAGE_ATTRS_01.cropWidth,
+                  GROUP_IMAGE_ATTRS_01.cropHeight
+                );
+              },
+            });
+            groupImage1Ref.current.getLayer().batchDraw();
+          }
+        },
+      }
+    );
+  };
 
   const startCapture = () => {
     setElapsedTime(0);
@@ -226,16 +302,39 @@ const CanvasGsap = () => {
           step="1"
           value={progress}
           onChange={handleInputChange}
-          style={{ width: '100%' }}
+          style={{ width: "100%" }}
         />
       </div>
-
       <Stage width={WIDTH} height={HEIGHT}>
         <Layer ref={layerRef}>
           <Rect width={WIDTH} height={HEIGHT} fill={"#efefef"} />
-          <Circle ref={circle1Ref} {...CIRCLE_ATTRS_01} radius={50} fill="blue" />
-          <Circle ref={circle2Ref} {...CIRCLE_ATTRS_02} radius={50} fill="red" />
-          <Circle ref={circle3Ref} {...CIRCLE_ATTRS_03} radius={50} fill="green" />
+          <Circle
+            ref={circle1Ref}
+            {...CIRCLE_ATTRS_01}
+            radius={50}
+            fill="blue"
+          />
+          <Circle
+            ref={circle2Ref}
+            {...CIRCLE_ATTRS_02}
+            radius={50}
+            fill="red"
+          />
+          <Circle
+            ref={circle3Ref}
+            {...CIRCLE_ATTRS_03}
+            radius={50}
+            fill="green"
+          />
+          <Circle
+            ref={circle4Ref}
+            {...CIRCLE_ATTRS_04}
+            radius={50}
+            fill="gray"
+          />
+          <Group ref={groupImage1Ref}>
+            <Image {...IMAGE_ATTRS_01} image={image} />
+          </Group>
         </Layer>
       </Stage>
     </div>

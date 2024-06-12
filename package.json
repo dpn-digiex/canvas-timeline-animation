@@ -20,7 +20,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-konva": "18.2.10",
-    "react-whammy": "1.0.4"
+    "react-whammy": "1.0.4",
+    "use-image": "^1.1.1"
   },
   "devDependencies": {
     "@types/animejs": "^3.1.12",
