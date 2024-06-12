@@ -2,7 +2,6 @@ import { useRef, useEffect, useState } from "react";
 import { Stage, Layer, Circle, Rect, Image, Group } from "react-konva";
 import { gsap } from "gsap";
 import Whammy from "react-whammy";
-import Konva from "konva";
 import useImage from "use-image";
 
 const totalTime = 5;
@@ -38,20 +37,31 @@ const CIRCLE_ATTRS_03 = {
   width: WIDTH_ELEMENT,
   height: HEIGHT_ELEMENT,
 };
-const CIRCLE_ATTRS_04 = {
-  x: 800,
-  y: 200,
-  width: WIDTH_ELEMENT,
-  height: HEIGHT_ELEMENT,
-};
+
 const IMAGE_ATTRS_01 = {
-  x: 200,
+  x: 0,
+  y: 200,
+  width: IMAGE_WIDTH_ELEMENT,
+  height: IMAGE_HEIGHT_ELEMENT,
+};
+const IMAGE_ATTRS_02 = {
+  x: 600,
   y: 200,
   width: IMAGE_WIDTH_ELEMENT,
   height: IMAGE_HEIGHT_ELEMENT,
 };
 const GROUP_IMAGE_ATTRS_01 = {
-  cropX: 200,
+  cropX: 0,
+  cropY: 200,
+  cropWidth: IMAGE_WIDTH_ELEMENT,
+  cropHeight: IMAGE_HEIGHT_ELEMENT,
+};
+const GROUP_IMAGE_ATTRS_02 = {
+  x: 600,
+  y: 200,
+  width: IMAGE_WIDTH_ELEMENT,
+  height: IMAGE_HEIGHT_ELEMENT,
+  cropX: 600,
   cropY: 200,
   cropWidth: IMAGE_WIDTH_ELEMENT,
   cropHeight: IMAGE_HEIGHT_ELEMENT,
@@ -68,13 +78,16 @@ const CanvasGsap = () => {
   const circle1Ref = useRef(null);
   const circle2Ref = useRef(null);
   const circle3Ref = useRef(null);
-  const circle4Ref = useRef(null);
+
   const groupImage1Ref = useRef(null);
+  const groupImage2Ref = useRef(null);
 
   const [image] = useImage(
     "https://lumiere-a.akamaihd.net/v1/images/darth-vader-main_4560aff7.jpeg?region=71%2C0%2C1139%2C854"
   );
-
+  const [image2] = useImage(
+    "  //upload.wikimedia.org/wikipedia/en/f/ff/Timoth%C3%A9e_Chalamet_as_Paul_Atreides_%28Dune_2021%29.jpg"
+  );
   const tl = useRef(gsap.timeline({ paused: true })).current;
 
   const firstInit = useRef(true);
@@ -257,8 +270,6 @@ const CanvasGsap = () => {
         duration: DURATION,
         ease: "expo.out",
         onUpdate: () => {
-          console.log(GROUP_IMAGE_ATTRS_01.cropY);
-
           if (groupImage1Ref.current) {
             // groupImage1Ref.current.cropX(GROUP_IMAGE_ATTRS_01.cropX);
             groupImage1Ref.current.setAttrs({
@@ -272,6 +283,37 @@ const CanvasGsap = () => {
               },
             });
             groupImage1Ref.current.getLayer().batchDraw();
+          }
+        },
+      }
+    );
+    tl.fromTo(
+      GROUP_IMAGE_ATTRS_02,
+      {
+        y: GROUP_IMAGE_ATTRS_02.y + GROUP_IMAGE_ATTRS_02.height,
+        cropY: GROUP_IMAGE_ATTRS_02.cropY + GROUP_IMAGE_ATTRS_02.cropHeight,
+      },
+      {
+        y: 0,
+        cropY: GROUP_IMAGE_ATTRS_02.cropY,
+        duration: DURATION,
+        ease: "expo.out",
+        onUpdate: () => {
+          console.log(GROUP_IMAGE_ATTRS_02.y);
+
+          if (groupImage2Ref.current) {
+            groupImage2Ref.current.y(GROUP_IMAGE_ATTRS_02.y);
+            groupImage2Ref.current.setAttrs({
+              clipFunc: (ctx) => {
+                ctx.rect(
+                  GROUP_IMAGE_ATTRS_02.cropX,
+                  GROUP_IMAGE_ATTRS_02.cropY,
+                  GROUP_IMAGE_ATTRS_02.cropWidth,
+                  GROUP_IMAGE_ATTRS_02.cropHeight
+                );
+              },
+            });
+            groupImage2Ref.current.getLayer().batchDraw();
           }
         },
       }
@@ -326,14 +368,12 @@ const CanvasGsap = () => {
             radius={50}
             fill="green"
           />
-          <Circle
-            ref={circle4Ref}
-            {...CIRCLE_ATTRS_04}
-            radius={50}
-            fill="gray"
-          />
+
           <Group ref={groupImage1Ref}>
             <Image {...IMAGE_ATTRS_01} image={image} />
+          </Group>
+          <Group ref={groupImage2Ref}>
+            <Image {...IMAGE_ATTRS_02} image={image2} />
           </Group>
         </Layer>
       </Stage>
