@@ -52,8 +52,14 @@ const IMAGE_ATTRS_02 = {
   height: IMAGE_HEIGHT_ELEMENT,
 };
 const GROUP_IMAGE_ATTRS_01 = {
+  x: 0,
+  y: 200,
+  width: IMAGE_WIDTH_ELEMENT,
+  height: IMAGE_HEIGHT_ELEMENT,
   cropX: 0,
-  cropY: 200,
+  cropY: 0,
+  offsetY: 0,
+  offsetX: 0,
   cropWidth: IMAGE_WIDTH_ELEMENT,
   cropHeight: IMAGE_HEIGHT_ELEMENT,
 };
@@ -65,6 +71,7 @@ const GROUP_IMAGE_ATTRS_02 = {
   cropX: 0,
   cropY: 0,
   offsetY: 0,
+  offsetX: 0,
   cropWidth: IMAGE_WIDTH_ELEMENT,
   cropHeight: IMAGE_HEIGHT_ELEMENT,
 };
@@ -266,10 +273,14 @@ const CanvasGsap = () => {
     tl.fromTo(
       GROUP_IMAGE_ATTRS_01,
       {
-        cropY: GROUP_IMAGE_ATTRS_01.cropY + GROUP_IMAGE_ATTRS_01.cropHeight,
+        ...getAnimationConfig("wipe", GROUP_IMAGE_ATTRS_01, {
+          direction,
+        })?.from,
       },
       {
-        cropY: GROUP_IMAGE_ATTRS_01.cropY,
+        ...getAnimationConfig("wipe", GROUP_IMAGE_ATTRS_01, {
+          direction,
+        })?.to,
         duration: DURATION,
         ease: "expo.out",
         onUpdate: () => {
@@ -290,56 +301,25 @@ const CanvasGsap = () => {
         },
       }
     );
-    // tl.fromTo(
-    //   GROUP_IMAGE_ATTRS_02,
-    //   {
-    //     height: 0,
-    //     offsetY: GROUP_IMAGE_ATTRS_02.height,
-    //     cropY: GROUP_IMAGE_ATTRS_02.cropHeight,
-    //   },
-    //   {
-    //     height: GROUP_IMAGE_ATTRS_02.height,
-    //     cropY: 0,
-    //     offsetY: 0,
-    //     duration: DURATION,
-    //     ease: "expo.out",
-    //     onUpdate: () => {
-    //       console.log(GROUP_IMAGE_ATTRS_02.height);
-    //       if (groupImage2Ref.current) {
-    //         groupImage2Ref.current.offsetY(GROUP_IMAGE_ATTRS_02.offsetY);
-    //         groupImage2Ref.current.height(GROUP_IMAGE_ATTRS_02.height);
 
-    //         groupImage2Ref.current.setAttrs({
-    //           clipFunc: (ctx) => {
-    //             ctx.rect(
-    //               GROUP_IMAGE_ATTRS_02.cropX,
-    //               GROUP_IMAGE_ATTRS_02.cropY,
-    //               GROUP_IMAGE_ATTRS_02.cropWidth,
-    //               GROUP_IMAGE_ATTRS_02.cropHeight
-    //             );
-    //           },
-    //         });
-    //         groupImage2Ref.current.getLayer().batchDraw();
-    //       }
-    //     },
-    //   }
-    // );
     tl.fromTo(
       GROUP_IMAGE_ATTRS_02,
       {
         ...getAnimationConfig("baseline", GROUP_IMAGE_ATTRS_02, {
-          direction: direction,
+          direction,
         })?.from,
       },
       {
         ...getAnimationConfig("baseline", GROUP_IMAGE_ATTRS_02, {
-          direction: direction,
+          direction,
         })?.to,
         duration: DURATION,
         ease: "expo.out",
         onUpdate: () => {
           if (groupImage2Ref.current) {
             groupImage2Ref.current.offsetY(GROUP_IMAGE_ATTRS_02.offsetY);
+            groupImage2Ref.current.offsetX(GROUP_IMAGE_ATTRS_02.offsetX);
+
             groupImage2Ref.current.height(GROUP_IMAGE_ATTRS_02.height);
             groupImage2Ref.current.setAttrs({
               clipFunc: (ctx) => {
@@ -418,10 +398,16 @@ const CanvasGsap = () => {
             />
           </Group>
 
-          <Group ref={groupImage1Ref}>
-            <Image {...IMAGE_ATTRS_01} image={image} />
+          <Group {...GROUP_IMAGE_ATTRS_01} ref={groupImage1Ref}>
+            <Image
+              width={GROUP_IMAGE_ATTRS_01.width}
+              height={GROUP_IMAGE_ATTRS_01.height}
+              x={0}
+              y={0}
+              image={image}
+            />
           </Group>
-          <Group {...GROUP_IMAGE_ATTRS_02} clipY={50} ref={groupImage2Ref}>
+          <Group {...GROUP_IMAGE_ATTRS_02} ref={groupImage2Ref}>
             <Image
               width={GROUP_IMAGE_ATTRS_02.width}
               height={GROUP_IMAGE_ATTRS_02.height}

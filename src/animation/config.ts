@@ -6,6 +6,7 @@ export const DIRECTION = {
 };
 export const ANIMATION_ID = {
   BASELINE: "baseline",
+  WIPE: "wipe",
 };
 export const getAnimationConfig = (type, defaultProps, properties) => {
   switch (type) {
@@ -24,17 +25,15 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
               offsetY: defaultProps.height,
               cropY: defaultProps.cropHeight,
             },
-            [DIRECTION.LEFT]: {
-              clipWidth: 0,
+            [DIRECTION.RIGHT]: {
               width: 0,
               offsetX: -defaultProps.width,
+              cropX: -defaultProps.cropWidth,
             },
-            [DIRECTION.RIGHT]: {
-              clipWidth: 0,
+            [DIRECTION.LEFT]: {
               width: 0,
-              clipX: defaultProps.clipWidth + defaultProps.clipX,
-              x: defaultProps.x,
               offsetX: defaultProps.width,
+              cropX: defaultProps.cropWidth,
             },
           }[properties?.direction || DIRECTION.UP],
         },
@@ -51,16 +50,59 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
               cropY: 0,
               offsetY: 0,
             },
-            [DIRECTION.LEFT]: {
-              clipWidth: defaultProps.clipWidth,
+            [DIRECTION.RIGHT]: {
               width: defaultProps.width,
+              cropX: 0,
               offsetX: 0,
             },
-            [DIRECTION.RIGHT]: {
-              clipWidth: defaultProps.clipWidth,
+            [DIRECTION.LEFT]: {
               width: defaultProps.width,
-              clipX: defaultProps.clipX,
-              x: defaultProps.x,
+              cropX: 0,
+              offsetX: 0,
+            },
+          }[properties?.direction || DIRECTION.UP],
+        },
+      };
+    case ANIMATION_ID.WIPE:
+      return {
+        from: {
+          ...defaultProps,
+          ...{
+            [DIRECTION.UP]: {
+              cropY: defaultProps.cropHeight,
+            },
+            [DIRECTION.DOWN]: {
+              cropHeight: 0,
+            },
+            [DIRECTION.RIGHT]: {
+              width: 0,
+              offsetX: -defaultProps.width,
+              cropX: -defaultProps.cropWidth,
+            },
+            [DIRECTION.LEFT]: {
+              width: 0,
+              offsetX: defaultProps.width,
+              cropX: defaultProps.cropWidth,
+            },
+          }[properties?.direction || DIRECTION.UP],
+        },
+        to: {
+          ...defaultProps,
+          ...{
+            [DIRECTION.UP]: {
+              cropY: 0,
+            },
+            [DIRECTION.DOWN]: {
+              cropHeight: defaultProps.cropHeight,
+            },
+            [DIRECTION.RIGHT]: {
+              width: defaultProps.width,
+              cropX: 0,
+              offsetX: 0,
+            },
+            [DIRECTION.LEFT]: {
+              width: defaultProps.width,
+              cropX: 0,
               offsetX: 0,
             },
           }[properties?.direction || DIRECTION.UP],
