@@ -15,7 +15,7 @@
     "animejs": "^3.2.2",
     "easing": "1.2.1",
     "framer-motion": "^11.2.10",
-    "gsap": "^3.12.5",
+    "gsap": "npm:@gsap/business@^3.12.5",
     "konva": "9.3.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

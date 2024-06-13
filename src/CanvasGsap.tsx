@@ -4,6 +4,12 @@ import { gsap } from "gsap";
 import Whammy from "react-whammy";
 import useImage from "use-image";
 import { getAnimationConfig } from "./animation/config";
+import { PhysicsPropsPlugin } from "gsap/PhysicsPropsPlugin";
+import { GSDevTools } from "gsap/GSDevTools";
+import { CustomEase } from "gsap/CustomEase";
+import { CustomBounce } from "gsap/CustomBounce"; // extends CustomEase
+
+gsap.registerPlugin(GSDevTools, PhysicsPropsPlugin, CustomBounce, CustomEase);
 
 const totalTime = 5;
 const FPS = 30;
@@ -17,8 +23,8 @@ const HEIGHT = 1080;
 const WIDTH_ELEMENT = 100;
 const HEIGHT_ELEMENT = 100;
 
-const IMAGE_WIDTH_ELEMENT = 500;
-const IMAGE_HEIGHT_ELEMENT = 500;
+const IMAGE_WIDTH_ELEMENT = 200;
+const IMAGE_HEIGHT_ELEMENT = 200;
 
 const CIRCLE_ATTRS_01 = {
   x: 100,
@@ -39,18 +45,6 @@ const CIRCLE_ATTRS_03 = {
   height: HEIGHT_ELEMENT,
 };
 
-const IMAGE_ATTRS_01 = {
-  x: 0,
-  y: 200,
-  width: IMAGE_WIDTH_ELEMENT,
-  height: IMAGE_HEIGHT_ELEMENT,
-};
-const IMAGE_ATTRS_02 = {
-  x: 600,
-  y: 200,
-  width: IMAGE_WIDTH_ELEMENT,
-  height: IMAGE_HEIGHT_ELEMENT,
-};
 const GROUP_IMAGE_ATTRS_01 = {
   x: 0,
   y: 200,
@@ -64,8 +58,22 @@ const GROUP_IMAGE_ATTRS_01 = {
   cropHeight: IMAGE_HEIGHT_ELEMENT,
 };
 const GROUP_IMAGE_ATTRS_02 = {
-  x: 600,
+  x: 400,
   y: 200,
+  width: IMAGE_WIDTH_ELEMENT,
+  height: IMAGE_HEIGHT_ELEMENT,
+  cropX: 0,
+  cropY: 0,
+  offsetY: 0,
+  offsetX: 0,
+  cropWidth: IMAGE_WIDTH_ELEMENT,
+  cropHeight: IMAGE_HEIGHT_ELEMENT,
+};
+const GROUP_IMAGE_ATTRS_03 = {
+  scaleX: 1,
+  scaleY: 1,
+  x: 0,
+  y: 600,
   width: IMAGE_WIDTH_ELEMENT,
   height: IMAGE_HEIGHT_ELEMENT,
   cropX: 0,
@@ -91,12 +99,16 @@ const CanvasGsap = () => {
 
   const groupImage1Ref = useRef(null);
   const groupImage2Ref = useRef(null);
+  const groupImage3Ref = useRef(null);
 
   const [image] = useImage(
     "https://lumiere-a.akamaihd.net/v1/images/darth-vader-main_4560aff7.jpeg?region=71%2C0%2C1139%2C854"
   );
   const [image2] = useImage(
     "  //upload.wikimedia.org/wikipedia/en/f/ff/Timoth%C3%A9e_Chalamet_as_Paul_Atreides_%28Dune_2021%29.jpg"
+  );
+  const [image3] = useImage(
+    "https://images2.thanhnien.vn/zoom/686_429/Uploaded/thuyhang/2019_04_28/thanos_TQJA.jpg"
   );
   const tl = useRef(gsap.timeline({ paused: true })).current;
 
@@ -336,6 +348,52 @@ const CanvasGsap = () => {
         },
       }
     );
+    tl.fromTo(
+      GROUP_IMAGE_ATTRS_03,
+      {
+        ...getAnimationConfig("pop", GROUP_IMAGE_ATTRS_03, {
+          direction,
+        })?.from,
+      },
+      {
+        ...getAnimationConfig("pop", GROUP_IMAGE_ATTRS_03, {
+          direction,
+        })?.to,
+        physicsProps: {
+          scaleX: { velocity: 8, acceleration: 180, friction: 0.01 },
+          scaleY: { velocity: 1, acceleration: 180, friction: 0.01 },
+        },
+        duration: 0.8,
+        // ease: CustomBounce.create("myBounce", {
+        //   strength: 0.7,
+        //   endAtStart: false,
+        //   squash: 2,
+        //   squashID: "myBounce-squash",
+        // }),
+
+        onUpdate: () => {
+          if (groupImage3Ref.current) {
+            console.log(GROUP_IMAGE_ATTRS_03.scaleY);
+            groupImage3Ref.current.scaleY(GROUP_IMAGE_ATTRS_03.scaleY);
+            groupImage3Ref.current.scaleX(GROUP_IMAGE_ATTRS_03.scaleX);
+            groupImage3Ref.current.offsetY(GROUP_IMAGE_ATTRS_03.offsetY);
+            groupImage3Ref.current.offsetX(GROUP_IMAGE_ATTRS_03.offsetX);
+            groupImage3Ref.current.height(GROUP_IMAGE_ATTRS_03.height);
+            groupImage3Ref.current.setAttrs({
+              clipFunc: (ctx) => {
+                ctx.rect(
+                  GROUP_IMAGE_ATTRS_03.cropX,
+                  GROUP_IMAGE_ATTRS_03.cropY,
+                  GROUP_IMAGE_ATTRS_03.cropWidth,
+                  GROUP_IMAGE_ATTRS_03.cropHeight
+                );
+              },
+            });
+            groupImage3Ref.current.getLayer().batchDraw();
+          }
+        },
+      }
+    );
   };
 
   const startCapture = () => {
@@ -345,7 +403,7 @@ const CanvasGsap = () => {
     frameId.current = null;
     setIsCapturing(true);
   };
-
+  GSDevTools.create({ animation: tl });
   return (
     <div className="CanvasAnimateJS" style={{ marginLeft: 30, marginTop: 30 }}>
       <div style={{ marginBottom: 16 }}>
@@ -414,6 +472,15 @@ const CanvasGsap = () => {
               x={0}
               y={0}
               image={image2}
+            />
+          </Group>
+          <Group {...GROUP_IMAGE_ATTRS_03} ref={groupImage3Ref}>
+            <Image
+              width={GROUP_IMAGE_ATTRS_03.width}
+              height={GROUP_IMAGE_ATTRS_03.height}
+              x={0}
+              y={0}
+              image={image3}
             />
           </Group>
         </Layer>

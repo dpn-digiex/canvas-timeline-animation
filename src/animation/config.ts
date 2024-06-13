@@ -7,6 +7,7 @@ export const DIRECTION = {
 export const ANIMATION_ID = {
   BASELINE: "baseline",
   WIPE: "wipe",
+  POP: "pop",
 };
 export const getAnimationConfig = (type, defaultProps, properties) => {
   switch (type) {
@@ -25,12 +26,12 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
               offsetY: defaultProps.height,
               cropY: defaultProps.cropHeight,
             },
-            [DIRECTION.RIGHT]: {
+            [DIRECTION.LEFT]: {
               width: 0,
               offsetX: -defaultProps.width,
               cropX: -defaultProps.cropWidth,
             },
-            [DIRECTION.LEFT]: {
+            [DIRECTION.RIGHT]: {
               width: 0,
               offsetX: defaultProps.width,
               cropX: defaultProps.cropWidth,
@@ -50,12 +51,12 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
               cropY: 0,
               offsetY: 0,
             },
-            [DIRECTION.RIGHT]: {
+            [DIRECTION.LEFT]: {
               width: defaultProps.width,
               cropX: 0,
               offsetX: 0,
             },
-            [DIRECTION.LEFT]: {
+            [DIRECTION.RIGHT]: {
               width: defaultProps.width,
               cropX: 0,
               offsetX: 0,
@@ -75,14 +76,10 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
               cropHeight: 0,
             },
             [DIRECTION.RIGHT]: {
-              width: 0,
-              offsetX: -defaultProps.width,
-              cropX: -defaultProps.cropWidth,
+              cropWidth: 0,
             },
             [DIRECTION.LEFT]: {
-              width: 0,
-              offsetX: defaultProps.width,
-              cropX: defaultProps.cropWidth,
+              cropX: defaultProps.width,
             },
           }[properties?.direction || DIRECTION.UP],
         },
@@ -96,16 +93,23 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
               cropHeight: defaultProps.cropHeight,
             },
             [DIRECTION.RIGHT]: {
-              width: defaultProps.width,
-              cropX: 0,
-              offsetX: 0,
+              cropWidth: defaultProps.cropWidth,
             },
             [DIRECTION.LEFT]: {
-              width: defaultProps.width,
               cropX: 0,
-              offsetX: 0,
             },
           }[properties?.direction || DIRECTION.UP],
+        },
+      };
+    case ANIMATION_ID.POP:
+      return {
+        from: {
+          scaleX: 0.5,
+          scaleY: 0.5,
+        },
+        to: {
+          scaleX: 1,
+          scaleY: 1,
         },
       };
   }
