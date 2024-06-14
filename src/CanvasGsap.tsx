@@ -247,6 +247,15 @@ const CanvasGsap = () => {
     }
   };
 
+  useEffect(() => {
+    gsap.to(circle1Ref.current, {
+      physicsProps: {
+        x: { velocity: 500, acceleration: -100, friction: 0.1 },
+        y: { velocity: -300, acceleration: 200, friction: 0.1 },
+      },
+      duration: 3,
+    });
+  }, []);
   const addAnimationTimeline = () => {
     // tl.to(CIRCLE_ATTRS_01, {
     //   y: CIRCLE_ATTRS_01.y + DISTANCE,
