@@ -1,16 +1,89 @@
+import { Power3 } from "gsap";
+
 export const DIRECTION = {
   UP: "direction_up",
   DOWN: "direction_down",
   LEFT: "direction_left",
   RIGHT: "direction_right",
 };
+
 export const ANIMATION_ID = {
-  BASELINE: "baseline",
+  NONE: "none",
+  FADE: "fade",
   WIPE: "wipe",
+  BASELINE: "baseline",
+  RISE: "rise",
+  PAN: "pan",
   POP: "pop",
+  ZOOM: "zoom",
+  NEON: "neon",
+  BREATH: "breath",
+  TYPEWRITER: "typewriter",
+  ASCEND: "ascend",
 };
+
+export const ANIMATION_ANIMATE = {
+  BOTH: "both",
+  ENTER: "enter",
+  EXIT: "exit",
+  ENTER_BOTH: ["enter", "both"],
+  EXIT_BOTH: ["exit", "both"],
+};
+
+export const ANIMATION_SCALE = {
+  IN: "scale_in",
+  OUT: "scale_out",
+};
+
+const NEON = {
+  LOOP: 8,
+  VALUE: [
+    { opacity: 0 },
+    { opacity: 1 },
+    { opacity: 0 },
+    { opacity: 1 },
+    { opacity: 0 },
+    { opacity: 1 },
+    { opacity: 0 },
+    { opacity: 1 },
+  ]
+};
+
+export const dRise = 200;
+
 export const getAnimationConfig = (type, defaultProps, properties) => {
   switch (type) {
+    case ANIMATION_ID.FADE:
+      return {
+        from: {
+          opacity: 0,
+        },
+        to: {
+          opacity: 1,
+          ease: Power3.easeOut,
+          duration: properties.duration
+        },
+      };
+    case ANIMATION_ID.RISE:
+      return {
+        from: {
+          ...defaultProps,
+          ...{
+            [DIRECTION.UP]: { y: defaultProps.y + dRise },
+            [DIRECTION.DOWN]: { y: defaultProps.y - dRise },
+            [DIRECTION.LEFT]: { x: defaultProps.x + dRise },
+            [DIRECTION.RIGHT]: { x: defaultProps.x - dRise },
+          }[properties?.direction || DIRECTION.UP],
+        },
+        to: { ...defaultProps, ease: 'rise', duration: properties.duration },
+      }
+    case ANIMATION_ID.PAN:
+      return {
+        from: {
+          x: defaultProps.x - dRise
+        },
+        to: { x: defaultProps.x, ease: 'rise', duration: properties.duration },
+      }
     case ANIMATION_ID.BASELINE:
       return {
         from: {
@@ -19,22 +92,22 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
             [DIRECTION.UP]: {
               height: 0,
               offsetY: -defaultProps.height,
-              cropY: -defaultProps.cropHeight,
+              clipY: -defaultProps.clipHeight,
             },
             [DIRECTION.DOWN]: {
               height: 0,
               offsetY: defaultProps.height,
-              cropY: defaultProps.cropHeight,
+              clipY: defaultProps.clipHeight,
             },
             [DIRECTION.LEFT]: {
               width: 0,
               offsetX: -defaultProps.width,
-              cropX: -defaultProps.cropWidth,
+              clipX: -defaultProps.clipWidth,
             },
             [DIRECTION.RIGHT]: {
               width: 0,
               offsetX: defaultProps.width,
-              cropX: defaultProps.cropWidth,
+              clipX: defaultProps.clipWidth,
             },
           }[properties?.direction || DIRECTION.UP],
         },
@@ -43,25 +116,26 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
           ...{
             [DIRECTION.UP]: {
               height: defaultProps.height,
-              cropY: 0,
+              clipY: 0,
               offsetY: 0,
             },
             [DIRECTION.DOWN]: {
               height: defaultProps.height,
-              cropY: 0,
+              clipY: 0,
               offsetY: 0,
             },
             [DIRECTION.LEFT]: {
               width: defaultProps.width,
-              cropX: 0,
+              clipX: 0,
               offsetX: 0,
             },
             [DIRECTION.RIGHT]: {
               width: defaultProps.width,
-              cropX: 0,
+              clipX: 0,
               offsetX: 0,
             },
           }[properties?.direction || DIRECTION.UP],
+          duration: properties.duration,
         },
       };
     case ANIMATION_ID.WIPE:
@@ -70,16 +144,16 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
           ...defaultProps,
           ...{
             [DIRECTION.UP]: {
-              cropY: defaultProps.cropHeight,
+              clipY: defaultProps.clipHeight,
             },
             [DIRECTION.DOWN]: {
-              cropHeight: 0,
+              clipHeight: 0,
             },
             [DIRECTION.RIGHT]: {
-              cropWidth: 0,
+              clipWidth: 0,
             },
             [DIRECTION.LEFT]: {
-              cropX: defaultProps.width,
+              clipX: defaultProps.width,
             },
           }[properties?.direction || DIRECTION.UP],
         },
@@ -87,30 +161,94 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
           ...defaultProps,
           ...{
             [DIRECTION.UP]: {
-              cropY: 0,
+              clipY: 0,
             },
             [DIRECTION.DOWN]: {
-              cropHeight: defaultProps.cropHeight,
+              clipHeight: defaultProps.clipHeight,
             },
             [DIRECTION.RIGHT]: {
-              cropWidth: defaultProps.cropWidth,
+              clipWidth: defaultProps.clipWidth,
             },
             [DIRECTION.LEFT]: {
-              cropX: 0,
+              clipX: 0,
             },
           }[properties?.direction || DIRECTION.UP],
+          duration: properties.duration,
         },
       };
     case ANIMATION_ID.POP:
       return {
         from: {
-          scaleX: 0.5,
-          scaleY: 0.5,
+          scaleX: 0,
+          scaleY: 0,
+          offsetX: defaultProps.width / 2,
+          offsetY: defaultProps.height / 2,
         },
         to: {
           scaleX: 1,
           scaleY: 1,
+          ease: 'elastic.out(1, 0.2)',
+          duration: properties.duration,
         },
       };
+
+    case ANIMATION_ID.ZOOM:
+      return {
+        from: {
+          scaleX: 1,
+          scaleY: 1,
+        },
+        to: {
+          scaleX: 1.2,
+          scaleY: 1.2,
+          duration: 5,
+          ease: "power3.out",
+        },
+      };
+
+    case ANIMATION_ID.BREATH:
+      return {
+        from: {
+          ...defaultProps,
+          ...{
+            [ANIMATION_SCALE.IN]: {
+              scaleX: 1.2,
+              scaleY: 1.2,
+              x: defaultProps.x - defaultProps.width * 0.5 * 0.2,
+              y: defaultProps.y - defaultProps.height * 0.5 * 0.2,
+            },
+            [ANIMATION_SCALE.OUT]: {
+              scaleX: 0.8,
+              scaleY: 0.8,
+              x: defaultProps.x + defaultProps.width * 0.5 * 0.2,
+              y: defaultProps.y + defaultProps.height * 0.5 * 0.2,
+            },
+          }[properties?.scale || ANIMATION_SCALE.IN],
+        },
+        to: {
+          ...defaultProps,
+          scaleX: 1,
+          scaleY: 1,
+          duration: 3,
+        },
+      };
+
+    case ANIMATION_ID.NEON:
+      return {
+        from: { opacity: 0 },
+        to: {
+          opacity: 1,
+          repeat: NEON.LOOP,
+          ease: "power1.inOut",
+          duration: properties.duration / NEON.LOOP,
+          yoyo: true,
+        }
+      };
+
+    default:
+      return {
+        from: defaultProps,
+        to: defaultProps,
+      }
   }
 };
