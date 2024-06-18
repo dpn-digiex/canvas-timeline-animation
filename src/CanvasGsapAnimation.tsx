@@ -12,6 +12,7 @@ import {
   TIMELINE_STATUS,
   TYPE_WRITING,
 } from './animation/config';
+import TestText from './elements/TestText';
 
 const elementData = [
   {
@@ -226,6 +227,7 @@ const CanvasGsapAnimation = () => {
                 />
               );
             })}
+            <TestText elementIndex={0} elementAnimation={undefined} id={undefined} x={200} y={300} />
           </Layer>
         </Stage>
       </div>

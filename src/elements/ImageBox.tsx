@@ -57,6 +57,7 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
   const [finished, setFinished] = useState(false);
 
   const firstInit = useRef(true);
+
   useEffect(() => {
     if (isTimelineReady) {
       firstInit.current = false;
