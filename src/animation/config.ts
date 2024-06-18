@@ -35,7 +35,24 @@ export const ANIMATION_SCALE = {
   OUT: "scale_out",
 };
 
-const NEON = {
+export const TYPE_WRITING = {
+  ELEMENT: "ELEMENT",
+  WORD: "WORD",
+  CHARACTER: "CHARACTER",
+};
+
+export const ANIMATION_APPLY_SCALE = [
+  ANIMATION_ID.ZOOM,
+  ANIMATION_ID.BREATH,
+]
+
+export const ANIMATION_APPLY_DIRECTION = [
+  ANIMATION_ID.BASELINE,
+  ANIMATION_ID.WIPE,
+  ANIMATION_ID.RISE,
+]
+
+export const NEON = {
   LOOP: 8,
   VALUE: [
     { opacity: 0 },
@@ -51,7 +68,15 @@ const NEON = {
 
 export const dRise = 200;
 
+export const TIMELINE_STATUS = {
+  IDLE: "idle",
+  PLAYING: "playing",
+  PAUSED: "paused",
+  COMPLETED: "completed",
+};
+
 export const getAnimationConfig = (type, defaultProps, properties) => {
+
   switch (type) {
     case ANIMATION_ID.FADE:
       return {
@@ -179,14 +204,26 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
     case ANIMATION_ID.POP:
       return {
         from: {
-          scaleX: 0,
-          scaleY: 0,
-          offsetX: defaultProps.width / 2,
-          offsetY: defaultProps.height / 2,
+          // scaleX: 0,
+          // scaleY: 0,
+          // offsetX: defaultProps.width / 2,
+          // offsetY: defaultProps.height / 2,
+          width: 0,
+          height: 0,
+          scaleX: defaultProps.scaleX * 0.5,
+          scaleY: defaultProps.scaleY * 0.5,
+          offsetX: -defaultProps.width * 0.25,
+          offsetY: -defaultProps.height * 0.25,
         },
         to: {
+          // scaleX: 1,
+          // scaleY: 1,
+          width: defaultProps.width,
+          height: defaultProps.height,
           scaleX: 1,
           scaleY: 1,
+          offsetX: 0,
+          offsetY: 0,
           ease: 'elastic.out(1, 0.2)',
           duration: properties.duration,
         },
@@ -238,9 +275,9 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
         from: { opacity: 0 },
         to: {
           opacity: 1,
-          repeat: NEON.LOOP,
+          repeat: 8,
           ease: "power1.inOut",
-          duration: properties.duration / NEON.LOOP,
+          duration: +(properties.duration / 10).toFixed(2),
           yoyo: true,
         }
       };

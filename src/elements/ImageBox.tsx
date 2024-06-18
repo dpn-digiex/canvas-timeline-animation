@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Group, Image } from 'react-konva';
+import { Group, Image, Rect } from 'react-konva';
 import useImage from 'use-image';
 import { useGSAP } from '../GsapProvider';
 import { gsap } from 'gsap';
@@ -22,7 +22,7 @@ const GROUP_IMAGE_ATTRS_01 = {
   clipHeight: IMAGE_HEIGHT_ELEMENT,
 };
 
-const ImageBox = ({ x, y, src }) => {
+const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected }) => {
   const [groupPosition, setGroupPosition] = useState({ x: x, y: y });
 
   const groupRef = useRef(null);
@@ -49,41 +49,80 @@ const ImageBox = ({ x, y, src }) => {
     setGroupPosition({ x: newPos.x, y: newPos.y });
   };
 
-  const { registerTween, resetTimeline, animationId, direction, isTimelineReady } = useGSAP();
+  const { registerTween, updateTween, resetTimeline, triggerUpdateTweens, setUpdatedTweenCount, isTimelineReady } =
+    useGSAP();
 
+  const [animating, setAnimating] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const [finished, setFinished] = useState(false);
+
+  const firstInit = useRef(true);
   useEffect(() => {
     if (isTimelineReady) {
-      resetTimeline();
-      const properties = { direction, duration: 1.5 };
-      const animateFocus = {
-        image: {
-          attrs: imageAttrs,
-          ref: imageRef.current,
-        },
-        group: {
-          attrs: groupAttrs,
-          ref: groupRef.current,
-        },
-      }[animationId === ANIMATION_ID.ZOOM ? 'image' : 'group'];
-      const animationConfig = getAnimationConfig(animationId, animateFocus.attrs, properties);
-      const tween = gsap.fromTo(animateFocus.attrs, animationConfig.from, {
-        ...animationConfig.to,
-        onUpdate: () => {
-          if (animateFocus.ref) {
-            animateFocus.ref.setAttrs(animateFocus.attrs);
-          }
-        },
-        onComplete: () => {
-          animateFocus.ref.setAttrs({ offsetX: 0, offsetY: 0 });
-        },
-      });
-      registerTween(tween);
+      firstInit.current = false;
+      const tween = createTween(elementAnimation);
+      registerTween(tween, elementIndex * 0.2);
     }
-  }, [isTimelineReady, animationId, direction]);
+  }, [isTimelineReady]);
+
+  useEffect(() => {
+    if (!firstInit.current && triggerUpdateTweens) {
+      resetTimeline();
+      const tween = createTween(elementAnimation);
+      updateTween(id, tween);
+      setUpdatedTweenCount((prev) => prev + 1);
+    }
+  }, [triggerUpdateTweens]);
+
+  const createTween = (animation) => {
+    const properties = {
+      direction: animation?.direction,
+      scale: animation?.scale,
+      duration: animation?.speed,
+    };
+    const animateFocus = {
+      image: {
+        attrs: imageAttrs,
+        ref: imageRef.current,
+      },
+      group: {
+        attrs: groupAttrs,
+        ref: groupRef.current,
+      },
+    }[animation?.animationId === ANIMATION_ID.ZOOM ? 'image' : 'group'];
+
+    const animationConfig = getAnimationConfig(animation?.animationId, animateFocus.attrs, properties);
+    return gsap.fromTo(animateFocus.attrs, animationConfig.from, {
+      ...animationConfig.to,
+      id: id,
+      onStart: () => {
+        // console.log('start animation of element', elementIndex);
+      },
+      onUpdate: () => {
+        if (animateFocus.ref) {
+          animateFocus.ref.setAttrs(animateFocus.attrs);
+        }
+      },
+      onComplete: () => {
+        animateFocus.ref.setAttrs(animateFocus.attrs);
+      },
+      immediateRender: false,
+    });
+  };
 
   return (
-    <Group draggable ref={groupRef} {...groupAttrs} onDragMove={handleGroupDragMove}>
+    <Group draggable ref={groupRef} id={id} {...groupAttrs} onDragMove={handleGroupDragMove}>
       <Image ref={imageRef} {...imageAttrs} />
+      {isSelected && (
+        <Rect
+          x={-5}
+          y={-5}
+          width={IMAGE_WIDTH_ELEMENT + 10}
+          height={IMAGE_HEIGHT_ELEMENT + 10}
+          stroke="orange"
+          strokeWidth={15}
+        />
+      )}
     </Group>
   );
 };
