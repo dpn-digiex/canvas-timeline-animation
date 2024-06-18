@@ -30,6 +30,8 @@ const GSAPContext = createContext({
   setTriggerUpdateTweens: (trigger: boolean) => {},
   updatedTweentCount: 0,
   setUpdatedTweenCount: (count: number) => {},
+  triggerPreviewAnimation: false,
+  setTriggerPreviewAnimation: (trigger: boolean) => {},
 });
 
 export const GSAPProvider = ({ children }) => {
@@ -40,7 +42,10 @@ export const GSAPProvider = ({ children }) => {
   const [triggerUpdateTweens, setTriggerUpdateTweens] = useState(false);
   const [updatedTweentCount, setUpdatedTweenCount] = useState(0);
 
+  const [triggerPreviewAnimation, setTriggerPreviewAnimation] = useState(false);
+
   const timelineRef = useRef(gsap.timeline({ paused: true }));
+  const previewRef = useRef(gsap.timeline({ paused: true }));
 
   const registerTween = (tween, delay) => {
     timelineRef.current.add(tween, delay);
@@ -99,6 +104,15 @@ export const GSAPProvider = ({ children }) => {
     }
   };
 
+  const playPreview = () => {
+    previewRef.current.clear();
+    previewRef.current.restart().play();
+    previewRef.current.eventCallback('onComplete', () => {
+      console.log('Animation completed');
+      previewRef.current.clear();
+    });
+  };
+
   useEffect(() => {
     timelineRef.current = gsap.timeline({
       paused: true,
@@ -124,8 +138,6 @@ export const GSAPProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    console.log({ updatedTweentCount });
-    console.log('tween length:', timelineRef.current.getChildren().length);
     if (updatedTweentCount && updatedTweentCount === timelineRef.current.getChildren().length) {
       playTimeline();
     }
@@ -160,6 +172,8 @@ export const GSAPProvider = ({ children }) => {
         setUpdatedTweenCount,
         progressTimeline: progress,
         setProgressTimeline: setProgress,
+        triggerPreviewAnimation,
+        setTriggerPreviewAnimation,
       }}
     >
       {children}

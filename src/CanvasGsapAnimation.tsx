@@ -13,6 +13,7 @@ import {
   TYPE_WRITING,
 } from './animation/config';
 import TestText from './elements/TestText';
+import { IoClose } from 'react-icons/io5';
 
 const elementData = [
   {
@@ -70,6 +71,7 @@ const CanvasGsapAnimation = () => {
     prepareTimeline,
     progressTimeline,
     setProgressTimeline,
+    setTriggerPreviewAnimation,
   } = useGSAP();
 
   const [selectedElementId, setSelectedElementId] = useState(null);
@@ -227,7 +229,7 @@ const CanvasGsapAnimation = () => {
                 />
               );
             })}
-            <TestText elementIndex={0} elementAnimation={undefined} id={undefined} x={200} y={300} />
+            {/* <TestText elementIndex={0} elementAnimation={undefined} id={undefined} x={200} y={300} /> */}
           </Layer>
         </Stage>
       </div>
@@ -289,7 +291,7 @@ const CanvasGsapAnimation = () => {
               Selected Id: <span style={{ color: 'Highlight' }}>{`${selectedElementId}`}</span>
             </h4>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button>Preview</button>
+              {/* <button onClick={() => setTriggerPreviewAnimation(true)}>Preview</button> */}
               <button onClick={handleApplyAnimation}>Apply</button>
             </div>
           </div>
@@ -325,11 +327,9 @@ const CanvasGsapAnimation = () => {
                         <h4>
                           Element Id: <span style={{ color: 'Highlight' }}>{`${elmAnm.id}`}</span>
                         </h4>
-                        <div
-                          style={{ color: 'red', cursor: 'pointer' }}
-                          onClick={() => removeApplyAnimation(elmAnm.id)}
-                        >
-                          🗙
+                        <div style={{ cursor: 'pointer' }} onClick={() => removeApplyAnimation(elmAnm.id)}>
+                          {/* 🗙 */}
+                          <IoClose fill="red" size={20} />
                         </div>
                       </div>
                       {elmAnm?.animationId && <div>Animation: {`${elmAnm.animationId}`}</div>}

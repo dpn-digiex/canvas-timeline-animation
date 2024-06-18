@@ -61,6 +61,7 @@ const TestText = ({ elementIndex, elementAnimation, id, x, y }) => {
       setUpdatedTweenCount((prev) => prev + 1);
     }
   }, [triggerUpdateTweens]);
+
   const createTween = (animation) => {
     return gsap.fromTo(
       wordRefs.current,
