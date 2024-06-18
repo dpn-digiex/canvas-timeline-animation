@@ -49,7 +49,8 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
     setGroupPosition({ x: newPos.x, y: newPos.y });
   };
 
-  const { registerTween, updateTween, resetTimeline, isTimelineReady } = useGSAP();
+  const { registerTween, updateTween, resetTimeline, triggerUpdateTweens, setUpdatedTweenCount, isTimelineReady } =
+    useGSAP();
 
   const [animating, setAnimating] = useState(false);
   const [preparing, setPreparing] = useState(false);
@@ -65,12 +66,13 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
   }, [isTimelineReady]);
 
   useEffect(() => {
-    if (!firstInit.current) {
+    if (!firstInit.current && triggerUpdateTweens) {
       resetTimeline();
       const tween = createTween(elementAnimation);
       updateTween(id, tween);
+      setUpdatedTweenCount((prev) => prev + 1);
     }
-  }, [elementAnimation]);
+  }, [triggerUpdateTweens]);
 
   const createTween = (animation) => {
     const properties = {
@@ -94,7 +96,7 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       ...animationConfig.to,
       id: id,
       onStart: () => {
-        console.log('start animation of element', elementIndex);
+        // console.log('start animation of element', elementIndex);
       },
       onUpdate: () => {
         if (animateFocus.ref) {

@@ -76,7 +76,6 @@ export const TIMELINE_STATUS = {
 };
 
 export const getAnimationConfig = (type, defaultProps, properties) => {
-  console.log("properties", properties);
 
   switch (type) {
     case ANIMATION_ID.FADE:
@@ -278,7 +277,7 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
           opacity: 1,
           repeat: 8,
           ease: "power1.inOut",
-          duration: properties.duration / 8,
+          duration: +(properties.duration / 10).toFixed(2),
           yoyo: true,
         }
       };

@@ -18,7 +18,7 @@ const elementData = [
     id: 'id_01',
     x: 50,
     y: 100,
-    src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/ce7c32a2384c4232b5719e87be08fc52.jpg',
+    src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
   },
   {
     id: 'id_02',
@@ -30,7 +30,7 @@ const elementData = [
     id: 'id_03',
     x: 100,
     y: 400,
-    src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/ce7c32a2384c4232b5719e87be08fc52.jpg',
+    src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
   },
   {
     id: 'id_04',
@@ -66,13 +66,13 @@ const CanvasGsapAnimation = () => {
     pauseTimeline,
     resumeTimeline,
     resetTimeline,
-    playTimeline,
+    prepareTimeline,
     progressTimeline,
     setProgressTimeline,
   } = useGSAP();
 
   const [selectedElementId, setSelectedElementId] = useState(null);
-  const [animationId, setAnimationId] = useState(ANIMATION_ID.WIPE);
+  const [animationId, setAnimationId] = useState(ANIMATION_ID.NONE);
   const [directionType, setDirectionType] = useState(DIRECTION.UP);
   const [scaleType, setScaleType] = useState(ANIMATION_SCALE.IN);
   const [speed, setSpeed] = useState(1);
@@ -93,7 +93,8 @@ const CanvasGsapAnimation = () => {
   };
 
   const playAnimation = () => {
-    playTimeline();
+    setSelectedElementId(null);
+    prepareTimeline();
   };
 
   const resetAnimation = () => {

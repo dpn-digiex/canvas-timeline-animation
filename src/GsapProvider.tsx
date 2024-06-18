@@ -19,12 +19,17 @@ const GSAPContext = createContext({
   updateTween: (id: string, newTween: GSAPTween) => {},
   removeTween: (id: string) => {},
   playTimeline: (seekTime?: number) => {},
+  prepareTimeline: () => {},
   resetTimeline: () => {},
   pauseTimeline: () => {},
   resumeTimeline: () => {},
   clearTimeline: () => {},
   progressTimeline: 0,
   setProgressTimeline: (progress: number) => {},
+  triggerUpdateTweens: false,
+  setTriggerUpdateTweens: (trigger: boolean) => {},
+  updatedTweentCount: 0,
+  setUpdatedTweenCount: (count: number) => {},
 });
 
 export const GSAPProvider = ({ children }) => {
@@ -58,17 +63,18 @@ export const GSAPProvider = ({ children }) => {
     }
   };
 
-  const prepapeTimeline = () => {
+  const prepareTimeline = () => {
     setTriggerUpdateTweens(true);
   };
 
-  const playTimeline = (seekTime) => {
+  const playTimeline = (seekTime?: number) => {
     if (seekTime) {
       timelineRef.current.seek(seekTime).play();
     } else {
       timelineRef.current.restart().play();
     }
     setUpdatedTweenCount(0);
+    setTriggerUpdateTweens(false);
     setTimelineStatus(TIMELINE_STATUS.PLAYING);
   };
 
@@ -118,6 +124,14 @@ export const GSAPProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    console.log({ updatedTweentCount });
+    console.log('tween length:', timelineRef.current.getChildren().length);
+    if (updatedTweentCount && updatedTweentCount === timelineRef.current.getChildren().length) {
+      playTimeline();
+    }
+  }, [updatedTweentCount]);
+
+  useEffect(() => {
     if (timelineRef.current) {
       timelineRef.current.progress(progress / 100);
     }
@@ -134,11 +148,16 @@ export const GSAPProvider = ({ children }) => {
         registerTween,
         updateTween,
         removeTween,
+        prepareTimeline,
         playTimeline,
         resetTimeline,
         pauseTimeline,
         resumeTimeline,
         clearTimeline,
+        triggerUpdateTweens,
+        setTriggerUpdateTweens,
+        updatedTweentCount,
+        setUpdatedTweenCount,
         progressTimeline: progress,
         setProgressTimeline: setProgress,
       }}
