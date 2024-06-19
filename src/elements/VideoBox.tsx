@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Group, Image, Rect } from 'react-konva';
-import useImage from 'use-image';
 import { useGSAP } from '../GsapProvider';
 import { gsap } from 'gsap';
 import { ANIMATION_ID, getAnimationEnterConfig, getAnimationExitConfig } from '../animation/config';
+import Konva from 'konva';
 
-const IMAGE_WIDTH_ELEMENT = 300;
-const IMAGE_HEIGHT_ELEMENT = 200;
+const VIDEO_WIDTH_ELEMENT = 200;
+const VIDEO_HEIGHT_ELEMENT = 400;
 
-const GROUP_IMAGE_ATTRS_01 = {
+const GROUP_VIDEO_ATTRS_01 = {
   scaleX: 1,
   scaleY: 1,
   opacity: 1,
@@ -16,32 +16,24 @@ const GROUP_IMAGE_ATTRS_01 = {
   offsetY: 0,
   clipX: 0,
   clipY: 0,
-  width: IMAGE_WIDTH_ELEMENT,
-  height: IMAGE_HEIGHT_ELEMENT,
-  clipWidth: IMAGE_WIDTH_ELEMENT,
-  clipHeight: IMAGE_HEIGHT_ELEMENT,
+  width: VIDEO_WIDTH_ELEMENT,
+  height: VIDEO_HEIGHT_ELEMENT,
+  clipWidth: VIDEO_WIDTH_ELEMENT,
+  clipHeight: VIDEO_HEIGHT_ELEMENT,
 };
 
-const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected }) => {
+const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected }) => {
   const [groupPosition, setGroupPosition] = useState({ x: x, y: y });
+  const [videoThubnail, setVideoThumbnail] = useState(null);
 
   const groupRef = useRef(null);
   const imageRef = useRef(null);
-
-  const [image] = useImage(src);
+  const videoRef = useRef(null);
+  const statusRef = useRef('loading');
 
   const groupAttrs = {
-    ...GROUP_IMAGE_ATTRS_01,
+    ...GROUP_VIDEO_ATTRS_01,
     ...groupPosition,
-  };
-  const imageAttrs = {
-    x: 0,
-    y: 0,
-    scaleX: 1,
-    scaleY: 1,
-    width: IMAGE_WIDTH_ELEMENT,
-    height: IMAGE_HEIGHT_ELEMENT,
-    image: image,
   };
 
   const handleGroupDragMove = (e) => {
@@ -56,8 +48,75 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
   const [preparing, setPreparing] = useState(false);
   const [finished, setFinished] = useState(false);
 
-  const firstInit = useRef(true);
+  const layer = imageRef.current?.getLayer();
+  const anim = new Konva.Animation(() => {}, layer);
 
+  const imageAttrs = {
+    x: 0,
+    y: 0,
+    scaleX: 1,
+    scaleY: 1,
+    width: VIDEO_WIDTH_ELEMENT,
+    height: VIDEO_HEIGHT_ELEMENT,
+  };
+
+  const getVideoThumbnail = (video) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const thumbnailDataUrl = canvas.toDataURL('image/jpeg');
+    setVideoThumbnail(thumbnailDataUrl);
+  };
+
+  useEffect(() => {
+    const video = document.createElement('video');
+    const onLoadedMetadata = () => {
+      videoRef.current = video;
+      videoRef.current.currentTime = 0.0001;
+      statusRef.current = 'loaded';
+      if (video.readyState >= 1) {
+        getVideoThumbnail(video);
+      }
+    };
+
+    const onError = (err) => {
+      statusRef.current = 'error';
+      videoRef.current = undefined;
+      console.log('LOADING VIDEO ERROR', err);
+    };
+
+    video.addEventListener('loadedmetadata', onLoadedMetadata);
+    video.addEventListener('error', onError);
+
+    video.setAttribute('data-canvas', 'video-element');
+    video.width = VIDEO_WIDTH_ELEMENT;
+    video.height = VIDEO_HEIGHT_ELEMENT;
+    video.preload = 'auto';
+    video.src = src;
+    video.crossOrigin = 'anonymous';
+    video.muted = true;
+    // video.currentTime = 0.001;
+    video.controls = true;
+    videoRef.current = video;
+
+    return () => {
+      video.removeEventListener('loadedmetadata', onLoadedMetadata);
+      video.removeEventListener('error', onError);
+    };
+  }, [src]);
+
+  useEffect(() => {
+    return () => {
+      // console.log("pause video", id);
+      videoRef.current?.pause();
+      videoRef.current = undefined;
+      anim?.stop();
+    };
+  }, []);
+
+  const firstInit = useRef(true);
   useEffect(() => {
     if (isTimelineReady) {
       firstInit.current = false;
@@ -83,15 +142,15 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       duration: animation?.speed,
     };
     const animateFocus = {
-      image: {
-        attrs: imageAttrs,
+      video: {
+        attrs: groupAttrs,
         ref: imageRef.current,
       },
       group: {
         attrs: groupAttrs,
         ref: groupRef.current,
       },
-    }[animation?.animationId === ANIMATION_ID.ZOOM ? 'image' : 'group'];
+    }[animation?.animationId === ANIMATION_ID.ZOOM ? 'video' : 'group'];
 
     const animationConfig = getAnimationEnterConfig(animation?.animationId, animateFocus.attrs, properties);
     return gsap.fromTo(animateFocus.attrs, animationConfig.from, {
@@ -99,7 +158,6 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       id: id,
       immediateRender: false,
       onStart: () => {
-        // console.log('start animation of element', elementIndex);
         setPreparing(false);
         setAnimating(true);
       },
@@ -130,7 +188,6 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       id: id,
       immediateRender: false,
       onStart: () => {
-        // console.log('start animation of element', elementIndex);
         setAnimating(true);
       },
       onUpdate: () => {
@@ -144,7 +201,13 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
     });
   };
 
-  return (
+  console.log('videoRef', videoRef.current);
+  console.log('videoThumbnail', videoThubnail);
+  console.log('status', statusRef.current);
+
+  return statusRef.current === 'loading' ? (
+    <Rect width={groupAttrs.width} height={groupAttrs.height} fill="black" x={groupAttrs.x} y={groupAttrs.y} />
+  ) : (
     <Group
       draggable
       ref={groupRef}
@@ -153,13 +216,13 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       onDragMove={handleGroupDragMove}
       {...((preparing || finished) && !animating && { opacity: 0 })}
     >
-      <Image ref={imageRef} {...imageAttrs} />
+      <Image ref={imageRef} image={videoRef.current} {...imageAttrs} />
       {isSelected && (
         <Rect
           x={-5}
           y={-5}
-          width={IMAGE_WIDTH_ELEMENT + 10}
-          height={IMAGE_HEIGHT_ELEMENT + 10}
+          width={VIDEO_WIDTH_ELEMENT + 10}
+          height={VIDEO_HEIGHT_ELEMENT + 10}
           stroke="orange"
           strokeWidth={15}
         />
@@ -168,4 +231,4 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
   );
 };
 
-export default ImageBox;
+export default VideoBox;

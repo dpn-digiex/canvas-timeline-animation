@@ -67,6 +67,7 @@ export const NEON = {
 };
 
 export const dRise = 200;
+export const dPan = 200;
 
 export const TIMELINE_STATUS = {
   IDLE: "idle",
@@ -75,8 +76,7 @@ export const TIMELINE_STATUS = {
   COMPLETED: "completed",
 };
 
-export const getAnimationConfig = (type, defaultProps, properties) => {
-
+export const getAnimationEnterConfig = (type, defaultProps, properties) => {
   switch (type) {
     case ANIMATION_ID.FADE:
       return {
@@ -85,7 +85,7 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
         },
         to: {
           opacity: 1,
-          ease: Power3.easeOut,
+          ease: Power3.easeIn,
           duration: properties.duration
         },
       };
@@ -204,10 +204,6 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
     case ANIMATION_ID.POP:
       return {
         from: {
-          // scaleX: 0,
-          // scaleY: 0,
-          // offsetX: defaultProps.width / 2,
-          // offsetY: defaultProps.height / 2,
           width: 0,
           height: 0,
           scaleX: defaultProps.scaleX * 0.5,
@@ -216,8 +212,6 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
           offsetY: -defaultProps.height * 0.25,
         },
         to: {
-          // scaleX: 1,
-          // scaleY: 1,
           width: defaultProps.width,
           height: defaultProps.height,
           scaleX: 1,
@@ -275,7 +269,215 @@ export const getAnimationConfig = (type, defaultProps, properties) => {
         from: { opacity: 0 },
         to: {
           opacity: 1,
-          repeat: 8,
+          repeat: 10,
+          ease: "power1.inOut",
+          duration: +(properties.duration / 10).toFixed(2),
+          yoyo: true,
+        }
+      };
+
+    default:
+      return {
+        from: defaultProps,
+        to: defaultProps,
+      }
+  }
+};
+
+export const getAnimationExitConfig = (type, defaultProps, properties) => {
+  switch (type) {
+    case ANIMATION_ID.FADE:
+      return {
+        from: {
+          opacity: 1,
+        },
+        to: {
+          opacity: 0,
+          ease: Power3.easeOut,
+          duration: properties.duration
+        },
+      };
+    case ANIMATION_ID.RISE:
+      return {
+        from: defaultProps,
+        to: {
+          opacity: 0,
+          ...{
+            [DIRECTION.UP]: { y: defaultProps.y - dRise },
+            [DIRECTION.DOWN]: { y: defaultProps.y + dRise },
+            [DIRECTION.LEFT]: { x: defaultProps.x - dRise },
+            [DIRECTION.RIGHT]: { x: defaultProps.x + dRise },
+          }[properties?.direction || DIRECTION.UP],
+          ease: 'rise',
+          duration: properties.duration
+        },
+      }
+    case ANIMATION_ID.PAN:
+      return {
+        from: defaultProps,
+        to: {
+          opacity: 0,
+          x: defaultProps.x + dPan,
+          ease: 'rise',
+          duration: properties.duration
+        },
+      }
+    case ANIMATION_ID.BASELINE:
+      return {
+        from: {
+          ...defaultProps,
+          ...{
+            [DIRECTION.UP]: {
+              clipHeight: defaultProps.clipHeight,
+              // height: defaultProps.height,
+              clipY: defaultProps.clipY,
+              offsetY: 0,
+            },
+            [DIRECTION.DOWN]: {
+              clipHeight: defaultProps.clipHeight,
+              height: defaultProps.height,
+              offsetY: 0,
+            },
+            [DIRECTION.LEFT]: {
+              clipWidth: defaultProps.clipWidth,
+              width: defaultProps.width,
+              clipX: defaultProps.clipX,
+              offsetX: 0,
+            },
+            [DIRECTION.RIGHT]: {
+              clipWidth: defaultProps.clipWidth,
+              width: defaultProps.width,
+              offsetX: 0,
+            },
+          }[properties?.direction || DIRECTION.UP],
+        },
+        to: {
+          opacity: 0,
+          ...{
+            [DIRECTION.UP]: {
+              clipHeight: 0,
+              // height: 0,
+              clipY: defaultProps.clipHeight + defaultProps.clipY,
+              offsetY: defaultProps.height,
+            },
+            [DIRECTION.DOWN]: {
+              clipHeight: 0,
+              height: 0,
+              offsetY: -defaultProps.height,
+            },
+            [DIRECTION.LEFT]: {
+              clipWidth: 0,
+              width: 0,
+              clipX: defaultProps.clipWidth + defaultProps.clipX,
+              offsetX: defaultProps.width,
+            },
+            [DIRECTION.RIGHT]: {
+              clipWidth: 0,
+              width: 0,
+              offsetX: -defaultProps.width,
+            },
+          }[properties?.direction || DIRECTION.UP],
+          duration: properties.duration,
+        },
+      };
+    case ANIMATION_ID.WIPE:
+      return {
+        from: {
+          ...defaultProps,
+          ...{
+            [DIRECTION.DOWN]: {
+              clipHeight: defaultProps.clipHeight,
+              height: defaultProps.height,
+              clipY: defaultProps.clipY,
+            },
+            [DIRECTION.UP]: {
+              clipHeight: defaultProps.clipHeight,
+              height: defaultProps.height,
+            },
+            [DIRECTION.LEFT]: {
+              clipWidth: defaultProps.clipWidth,
+              width: defaultProps.width,
+            },
+            [DIRECTION.RIGHT]: {
+              clipWidth: defaultProps.clipWidth,
+              width: defaultProps.width,
+              clipX: defaultProps.clipX,
+            },
+          }[properties?.direction || DIRECTION.RIGHT],
+        },
+        to: {
+          opacity: 0,
+          ...{
+            [DIRECTION.DOWN]: {
+              clipHeight: 0,
+              height: 0,
+              clipY: defaultProps.clipHeight + defaultProps.clipY,
+            },
+            [DIRECTION.UP]: {
+              clipHeight: 0,
+              height: 0,
+            },
+            [DIRECTION.LEFT]: {
+              clipWidth: 0,
+              width: 0,
+            },
+            [DIRECTION.RIGHT]: {
+              clipWidth: 0,
+              width: 0,
+              clipX: defaultProps.clipWidth + defaultProps.clipX,
+            },
+          }[properties?.direction || DIRECTION.RIGHT],
+          duration: properties.duration,
+        },
+      };
+    case ANIMATION_ID.POP:
+      return {
+        from: {
+          width: defaultProps.width,
+          height: defaultProps.height,
+          scaleX: 1,
+          scaleY: 1,
+          offsetX: 0,
+          offsetY: 0,
+        },
+        to: {
+          width: 0,
+          height: 0,
+          scaleX: defaultProps.scaleX * 0.5,
+          scaleY: defaultProps.scaleY * 0.5,
+          offsetX: -defaultProps.width * 0.25,
+          offsetY: -defaultProps.height * 0.25,
+          ease: 'elastic.in(1, 0.2)', // Adjust the ease function to match the exit effect
+          duration: properties.duration,
+        },
+      };
+
+    case ANIMATION_ID.ZOOM:
+      return {
+        from: { opacity: 1 },
+        to: {
+          opacity: 0,
+          duration: 0.2,
+          ease: Power3.easeOut,
+        },
+      };
+
+    case ANIMATION_ID.BREATH:
+      return {
+        from: { opacity: 1 },
+        to: {
+          opacity: 0,
+          duration: 0.2,
+          ease: Power3.easeOut,
+        },
+      };
+
+    case ANIMATION_ID.NEON:
+      return {
+        from: { opacity: 1 },
+        to: {
+          opacity: 0,
+          repeat: 10,
           ease: "power1.inOut",
           duration: +(properties.duration / 10).toFixed(2),
           yoyo: true,

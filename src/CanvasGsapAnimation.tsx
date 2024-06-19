@@ -14,31 +14,43 @@ import {
 } from './animation/config';
 import TestText from './elements/TestText';
 import { IoClose } from 'react-icons/io5';
+import VideoBox from './elements/VideoBox';
 
 const elementData = [
   {
     id: 'id_01',
     x: 50,
     y: 100,
+    elementType: 'image',
     src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
   },
   {
     id: 'id_02',
     x: 400,
     y: 100,
+    elementType: 'image',
     src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
   },
+  // {
+  //   id: 'id_03',
+  //   x: 100,
+  //   y: 400,
+  //   elementType: 'image',
+  //   src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
+  // },
+  // {
+  //   id: 'id_04',
+  //   x: 400,
+  //   y: 400,
+  //   elementType: 'image',
+  //   src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
+  // },
   {
-    id: 'id_03',
-    x: 100,
-    y: 400,
-    src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
-  },
-  {
-    id: 'id_04',
-    x: 400,
-    y: 400,
-    src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
+    id: 'id_05',
+    x: 200,
+    y: 300,
+    elementType: 'video',
+    src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Video/8fb39a83fe76423d8201d969da61649b.mp4',
   },
 ];
 
@@ -78,12 +90,41 @@ const CanvasGsapAnimation = () => {
   const [animationId, setAnimationId] = useState(ANIMATION_ID.NONE);
   const [directionType, setDirectionType] = useState(DIRECTION.UP);
   const [scaleType, setScaleType] = useState(ANIMATION_SCALE.IN);
+  const [animateType, setAnimateType] = useState(ANIMATION_ANIMATE.ENTER);
   const [speed, setSpeed] = useState(1);
 
   const [animationsApply, setAnimationsApply] = useState([]);
   const [isOpenDetailApply, setIsOpenDetailApply] = useState(true);
 
   const layerRef = useRef(null);
+
+  const renderElement = (props, index) => {
+    const animation = animationsApply.find((elm) => elm.id === props.id);
+    switch (props.elementType) {
+      case 'image':
+        return (
+          <ImageBox
+            key={index}
+            elementIndex={index}
+            elementAnimation={animation}
+            isSelected={selectedElementId === props.id}
+            {...props}
+          />
+        );
+      case 'video':
+        return (
+          <VideoBox
+            key={index}
+            elementIndex={index}
+            elementAnimation={animation}
+            isSelected={selectedElementId === props.id}
+            {...props}
+          />
+        );
+      default:
+        break;
+    }
+  };
 
   const handleSelectElement = (e) => {
     const clickedOnEmpty = e.target === e.target.getStage();
@@ -121,6 +162,7 @@ const CanvasGsapAnimation = () => {
   };
 
   const handleApplyAnimation = () => {
+    if (animationId === ANIMATION_ID.NONE) return;
     let typeApply = 'elm_normal';
     if (ANIMATION_APPLY_DIRECTION.includes(animationId)) {
       typeApply = 'elm_direction';
@@ -218,16 +260,7 @@ const CanvasGsapAnimation = () => {
           <Layer ref={layerRef}>
             <Rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill={'#efefef'} />
             {elementData.map((props, index) => {
-              const animation = animationsApply.find((elm) => elm.id === props.id);
-              return (
-                <ImageBox
-                  key={index}
-                  elementIndex={index}
-                  elementAnimation={animation}
-                  isSelected={selectedElementId === props.id}
-                  {...props}
-                />
-              );
+              return renderElement(props, index);
             })}
             {/* <TestText elementIndex={0} elementAnimation={undefined} id={undefined} x={200} y={300} /> */}
           </Layer>
@@ -236,23 +269,18 @@ const CanvasGsapAnimation = () => {
 
       <div
         className="setting-ground"
-        style={{ flex: 1, width: 350, height: window.innerHeight, backgroundColor: '#efefef' }}
+        style={{ flex: 1, width: 350, height: window.innerHeight, backgroundColor: '#efefef', overflowY: 'auto' }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', padding: 8 }}>
           <h4 style={{ marginBottom: 8 }}>Animation Type:</h4>
           <select value={animationId} onChange={(e) => setAnimationId(e.target.value)}>
-            <option value="none">None</option>
-            <option value="fade">Fade</option>
-            <option value="wipe">Wipe</option>
-            <option value="baseline">Baseline</option>
-            <option value="rise">Rise</option>
-            <option value="pan">Pan</option>
-            <option value="pop">Pop</option>
-            <option value="neon">Neon</option>
-            <option value="breath">Breath</option>
-            <option value="zoom">Zoom</option>
-            <option value="typewriter">Typewriter</option>
-            <option value="ascend">Ascend</option>
+            {Object.keys(ANIMATION_ID).map((key) => {
+              return (
+                <option key={key} value={ANIMATION_ID[key]}>
+                  {ANIMATION_ID[key]}
+                </option>
+              );
+            })}
           </select>
           <h4 style={{ margin: '8px 0' }}>
             Speed: <span style={{ color: 'Highlight' }}>{`${speed}s`}</span>
@@ -266,6 +294,14 @@ const CanvasGsapAnimation = () => {
             onChange={(e) => setSpeed(e.target.value)}
             style={{ width: '100%' }}
           />
+          <>
+            <h4 style={{ marginBottom: 8 }}>Animate:</h4>
+            <select defaultValue={animateType} onChange={(e) => setAnimateType(e.target.value)}>
+              <option value={ANIMATION_ANIMATE.BOTH}>Both</option>
+              <option value={ANIMATION_ANIMATE.ENTER}>Enter</option>
+              <option value={ANIMATION_ANIMATE.EXIT}>Exit</option>
+            </select>
+          </>
           {ANIMATION_APPLY_DIRECTION.includes(animationId) && (
             <>
               <h4 style={{ marginBottom: 8 }}>Direction:</h4>
@@ -291,7 +327,7 @@ const CanvasGsapAnimation = () => {
               Selected Id: <span style={{ color: 'Highlight' }}>{`${selectedElementId}`}</span>
             </h4>
             <div style={{ display: 'flex', gap: 8 }}>
-              {/* <button onClick={() => setTriggerPreviewAnimation(true)}>Preview</button> */}
+              <button onClick={() => setTriggerPreviewAnimation(true)}>Preview</button>
               <button onClick={handleApplyAnimation}>Apply</button>
             </div>
           </div>
@@ -333,6 +369,7 @@ const CanvasGsapAnimation = () => {
                         </div>
                       </div>
                       {elmAnm?.animationId && <div>Animation: {`${elmAnm.animationId}`}</div>}
+                      {elmAnm?.animate && <div>Animate: {`${elmAnm.animate}`}</div>}
                       {elmAnm?.speed && <div>Speed: {`${elmAnm.speed}s`}</div>}
                       {elmAnm?.direction && <div>Direction: {`${elmAnm.direction}`}</div>}
                       {elmAnm?.scale && <div>Scale: {`${elmAnm.scale}`}</div>}
