@@ -41,8 +41,15 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
     setGroupPosition({ x: newPos.x, y: newPos.y });
   };
 
-  const { registerTween, updateTween, resetTimeline, triggerUpdateTweens, setUpdatedTweenCount, isTimelineReady } =
-    useGSAP();
+  const {
+    elapsedTime,
+    registerTween,
+    updateTween,
+    resetTimeline,
+    triggerUpdateTweens,
+    setUpdatedTweenCount,
+    isTimelineReady,
+  } = useGSAP();
 
   const [animating, setAnimating] = useState(false);
   const [preparing, setPreparing] = useState(false);
@@ -97,8 +104,6 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
     video.src = src;
     video.crossOrigin = 'anonymous';
     video.muted = true;
-    // video.currentTime = 0.001;
-    video.controls = true;
     videoRef.current = video;
 
     return () => {
@@ -106,6 +111,17 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       video.removeEventListener('error', onError);
     };
   }, [src]);
+
+  useEffect(() => {
+    console.log('elapsedTime', elapsedTime);
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+      }
+      videoRef.current.currentTime = elapsedTime;
+      anim?.start();
+    }
+  }, [elapsedTime, videoRef.current]);
 
   useEffect(() => {
     return () => {
@@ -200,10 +216,6 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       },
     });
   };
-
-  console.log('videoRef', videoRef.current);
-  console.log('videoThumbnail', videoThubnail);
-  console.log('status', statusRef.current);
 
   return statusRef.current === 'loading' ? (
     <Rect width={groupAttrs.width} height={groupAttrs.height} fill="black" x={groupAttrs.x} y={groupAttrs.y} />
