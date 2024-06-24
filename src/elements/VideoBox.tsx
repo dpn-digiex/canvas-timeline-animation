@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Group, Image, Rect } from 'react-konva';
 import { useGSAP } from '../GsapProvider';
 import { gsap } from 'gsap';
@@ -6,7 +6,7 @@ import { ANIMATION_ID, getAnimationEnterConfig, getAnimationExitConfig } from '.
 import Konva from 'konva';
 
 const VIDEO_WIDTH_ELEMENT = 200;
-const VIDEO_HEIGHT_ELEMENT = 400;
+const VIDEO_HEIGHT_ELEMENT = 300;
 
 const GROUP_VIDEO_ATTRS_01 = {
   scaleX: 1,
@@ -24,11 +24,17 @@ const GROUP_VIDEO_ATTRS_01 = {
 
 const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected }) => {
   const [groupPosition, setGroupPosition] = useState({ x: x, y: y });
-  const [videoThubnail, setVideoThumbnail] = useState(null);
+  const [videoAttrs, setVideoAttrs] = useState({
+    x: 0,
+    y: 0,
+    scaleX: 1,
+    scaleY: 1,
+    width: VIDEO_WIDTH_ELEMENT,
+    height: VIDEO_HEIGHT_ELEMENT,
+  });
 
   const groupRef = useRef(null);
   const imageRef = useRef(null);
-  const videoRef = useRef(null);
   const statusRef = useRef('loading');
 
   const groupAttrs = {
@@ -49,23 +55,24 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
     triggerUpdateTweens,
     setUpdatedTweenCount,
     isTimelineReady,
+    isPlayingTimeline,
   } = useGSAP();
 
   const [animating, setAnimating] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [finished, setFinished] = useState(false);
 
-  const layer = imageRef.current?.getLayer();
-  const anim = new Konva.Animation(() => {}, layer);
-
-  const imageAttrs = {
-    x: 0,
-    y: 0,
-    scaleX: 1,
-    scaleY: 1,
-    width: VIDEO_WIDTH_ELEMENT,
-    height: VIDEO_HEIGHT_ELEMENT,
-  };
+  const videoElement = useMemo(() => {
+    const element = document.createElement('video');
+    element.src = src;
+    element.crossOrigin = 'anonymous';
+    element.muted = true;
+    element.preload = 'auto';
+    element.width = VIDEO_WIDTH_ELEMENT;
+    element.height = VIDEO_HEIGHT_ELEMENT;
+    element.setAttribute('data-canvas', 'video-element');
+    return element;
+  }, [src]);
 
   const getVideoThumbnail = (video) => {
     const canvas = document.createElement('canvas');
@@ -74,61 +81,60 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const thumbnailDataUrl = canvas.toDataURL('image/jpeg');
-    setVideoThumbnail(thumbnailDataUrl);
+    videoElement.poster = thumbnailDataUrl;
   };
 
   useEffect(() => {
-    const video = document.createElement('video');
-    const onLoadedMetadata = () => {
-      videoRef.current = video;
-      videoRef.current.currentTime = 0.0001;
+    const onload = function () {
       statusRef.current = 'loaded';
-      if (video.readyState >= 1) {
-        getVideoThumbnail(video);
+      videoElement.currentTime = 0.001;
+      if (videoElement.readyState >= 1) {
+        getVideoThumbnail(videoElement);
       }
     };
 
     const onError = (err) => {
       statusRef.current = 'error';
-      videoRef.current = undefined;
       console.log('LOADING VIDEO ERROR', err);
     };
 
-    video.addEventListener('loadedmetadata', onLoadedMetadata);
-    video.addEventListener('error', onError);
-
-    video.setAttribute('data-canvas', 'video-element');
-    video.width = VIDEO_WIDTH_ELEMENT;
-    video.height = VIDEO_HEIGHT_ELEMENT;
-    video.preload = 'auto';
-    video.src = src;
-    video.crossOrigin = 'anonymous';
-    video.muted = true;
-    videoRef.current = video;
+    videoElement.addEventListener('loadedmetadata', onload);
+    videoElement.addEventListener('error', onError);
 
     return () => {
-      video.removeEventListener('loadedmetadata', onLoadedMetadata);
-      video.removeEventListener('error', onError);
+      videoElement.removeEventListener('loadedmetadata', onload);
+      videoElement.addEventListener('error', onError);
     };
-  }, [src]);
+  }, [videoElement]);
 
   useEffect(() => {
-    console.log('elapsedTime', elapsedTime);
-    if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
+    if (videoElement && imageRef.current) {
+      const layer = imageRef.current.getLayer();
+      const anim = new Konva.Animation(() => {}, layer);
+      if (isPlayingTimeline) {
+        videoElement.currentTime = elapsedTime;
+        videoElement.play();
+        anim.start();
+      } else {
+        videoElement.pause();
       }
-      videoRef.current.currentTime = elapsedTime;
-      anim?.start();
+      return () => {
+        anim.stop();
+      };
     }
-  }, [elapsedTime, videoRef.current]);
+  }, [videoElement, isPlayingTimeline]);
+
+  useEffect(() => {
+    if (!isPlayingTimeline) {
+      videoElement.currentTime = elapsedTime;
+    }
+  }, [elapsedTime]);
 
   useEffect(() => {
     return () => {
-      // console.log("pause video", id);
-      videoRef.current?.pause();
-      videoRef.current = undefined;
-      anim?.stop();
+      videoElement.pause();
+      videoElement.src = '';
+      videoElement.load();
     };
   }, []);
 
@@ -226,9 +232,9 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       id={id}
       {...groupAttrs}
       onDragMove={handleGroupDragMove}
-      {...((preparing || finished) && !animating && { opacity: 0 })}
+      // {...((preparing || finished) && !animating && { opacity: 0 })}
     >
-      <Image ref={imageRef} image={videoRef.current} {...imageAttrs} />
+      <Image ref={imageRef} image={videoElement} {...videoAttrs} />
       {isSelected && (
         <Rect
           x={-5}

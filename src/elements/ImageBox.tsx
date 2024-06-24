@@ -28,7 +28,7 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
   const groupRef = useRef(null);
   const imageRef = useRef(null);
 
-  const [image] = useImage(src);
+  const [image] = useImage(src, 'anonymous');
 
   const groupAttrs = {
     ...GROUP_IMAGE_ATTRS_01,

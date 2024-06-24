@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import ImageBox from './elements/ImageBox';
 import { useGSAP } from './GsapProvider';
@@ -12,45 +12,51 @@ import {
   TIMELINE_STATUS,
   TYPE_WRITING,
 } from './animation/config';
-import TestText from './elements/TestText';
 import { IoClose } from 'react-icons/io5';
 import VideoBox from './elements/VideoBox';
+import { downloadVideo } from './utils';
 
-const elementData = [
+const PAGES = [
   {
-    id: 'id_01',
-    x: 50,
-    y: 100,
-    elementType: 'image',
-    src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
-  },
-  {
-    id: 'id_02',
-    x: 400,
-    y: 100,
-    elementType: 'image',
-    src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
-  },
-  // {
-  //   id: 'id_03',
-  //   x: 100,
-  //   y: 400,
-  //   elementType: 'image',
-  //   src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
-  // },
-  // {
-  //   id: 'id_04',
-  //   x: 400,
-  //   y: 400,
-  //   elementType: 'image',
-  //   src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
-  // },
-  {
-    id: 'id_05',
-    x: 200,
-    y: 300,
-    elementType: 'video',
-    src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Video/8fb39a83fe76423d8201d969da61649b.mp4',
+    pageId: 'page_01',
+    totalTime: 5,
+    children: [
+      {
+        id: 'id_01',
+        x: 50,
+        y: 100,
+        elementType: 'image',
+        src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
+      },
+      {
+        id: 'id_02',
+        x: 400,
+        y: 100,
+        elementType: 'image',
+        src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
+      },
+      // {
+      //   id: 'id_03',
+      //   x: 100,
+      //   y: 400,
+      //   elementType: 'image',
+      //   src: 'https://stg-brandelement-static.obello.com/64a56325164c716b4b40e5c8/Image/09331ef409b34989b4897a0e62f59cf5.jpg',
+      // },
+      // {
+      //   id: 'id_04',
+      //   x: 400,
+      //   y: 400,
+      //   elementType: 'image',
+      //   src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
+      // },
+      {
+        id: 'id_05',
+        x: 200,
+        y: 300,
+        elementType: 'video',
+        src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Video/8fb39a83fe76423d8201d969da61649b.mp4',
+      },
+    ],
   },
 ];
 
@@ -68,12 +74,16 @@ const elementAnimation = {
   typeWriting: TYPE_WRITING.ELEMENT,
 };
 
-const totalTimeTemplate = 5;
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
+const TOTAL_TIME_TEMPLATE = 7;
+const FPS = 30;
+const INTERVAL_DURATION_MS = 1 / FPS;
 
 const CanvasGsapAnimation = () => {
   const {
+    timelineRef: tl,
+    isPlayingTimeline,
     timelineStatus,
     elapsedTime,
     totalTime,
@@ -86,6 +96,7 @@ const CanvasGsapAnimation = () => {
     setTriggerPreviewAnimation,
   } = useGSAP();
 
+  const [pageActive, setPageActive] = useState(PAGES[0]);
   const [selectedElementId, setSelectedElementId] = useState(null);
   const [animationId, setAnimationId] = useState(ANIMATION_ID.NONE);
   const [directionType, setDirectionType] = useState(DIRECTION.UP);
@@ -95,6 +106,8 @@ const CanvasGsapAnimation = () => {
 
   const [animationsApply, setAnimationsApply] = useState([]);
   const [isOpenDetailApply, setIsOpenDetailApply] = useState(true);
+
+  const [isExportVideo, setIsExportVideo] = useState(false);
 
   const layerRef = useRef(null);
 
@@ -212,7 +225,7 @@ const CanvasGsapAnimation = () => {
       }
     } else {
       // apply for all elements
-      const animations = elementData.map((element) => {
+      const animations = pageActive.children.map((element) => {
         return {
           ...elementAnimation,
           ...updatedAnimation,
@@ -228,6 +241,104 @@ const CanvasGsapAnimation = () => {
     setAnimationsApply(newAnimations);
   };
 
+  const calculateStartTimePage = (pageId: string, availablePages: any) => {
+    if (availablePages?.length === 0 || !availablePages) return 0;
+    let startTime = 0;
+    for (let i = 0; i < availablePages?.length; i++) {
+      if (availablePages[i].id === pageId) break;
+      startTime += availablePages?.[i]?.duration || 0; // Use optional chaining
+    }
+    return +startTime.toFixed(0);
+  };
+
+  const calculateEndTimePage = (pageId: string, availablePages: any) => {
+    if (availablePages?.length === 0 || !availablePages) return 0;
+    let startTime = 0;
+    let indexPage = 0;
+    for (let i = 0; i < availablePages?.length; i++) {
+      if (availablePages[i].id === pageId) {
+        indexPage = i;
+        break;
+      }
+      startTime += availablePages?.[i]?.duration || 0; // Use optional chaining
+    }
+    return +(startTime + availablePages?.[indexPage]?.duration).toFixed(0);
+    // return +(startTime).toFixed(0)
+  };
+
+  const calculateTimeout = (elementsApplied = []) => {
+    if (elementsApplied.length === 0) return 0;
+    let timeout = 0;
+    let delay = 0;
+    elementsApplied.forEach((element) => {
+      if (element.animationId !== ANIMATION_ID.NONE) {
+        timeout = element.speed > timeout ? element.speed : timeout;
+        delay = element.delay && element.delay > delay ? element.delay : delay;
+      }
+    });
+    timeout = timeout + delay;
+    return +timeout.toFixed(0);
+  };
+
+  const exportVideoTemplate = () => {
+    setIsExportVideo(true);
+  };
+
+  const [currentTimeCapture, setCurrentTimeCapture] = useState(0);
+  const framesRef = useRef([]);
+  const startProcessExport = useRef(true);
+  const frameId = useRef(null);
+
+  useEffect(() => {
+    if (isExportVideo) {
+      if (startProcessExport.current) {
+        resetTimeline();
+        prepareTimeline(false);
+        startProcessExport.current = false;
+      }
+      const requestCapture = async () => {
+        if (currentTimeCapture < TOTAL_TIME_TEMPLATE) {
+          await captureFrame()
+            .then(() => {
+              setCurrentTimeCapture((prev) => +(prev + INTERVAL_DURATION_MS).toFixed(2));
+            })
+            .catch((error) => {
+              console.log('error capture', error);
+            });
+        } else {
+          console.log('Completed capturing frames', framesRef.current.length);
+          await downloadVideo(framesRef.current, 'video.webm');
+          setIsExportVideo(false);
+        }
+      };
+      frameId.current = requestAnimationFrame(requestCapture);
+      return () => cancelAnimationFrame(frameId.current);
+    }
+  }, [isExportVideo, currentTimeCapture]);
+
+  const captureFrame = async () => {
+    return new Promise((resolve, reject) => {
+      try {
+        const seekTime = +((currentTimeCapture * tl.duration()) / totalTime).toFixed(2);
+        if (seekTime <= TOTAL_TIME_TEMPLATE) {
+          tl.seek(seekTime, false); // Seek to the specific time without playing
+          console.log('seeking to: ', seekTime, `/${TOTAL_TIME_TEMPLATE}`);
+        }
+        const frame = layerRef.current.toDataURL({ mimeType: 'image/webp' });
+        framesRef.current.push(frame);
+        // const a = document.createElement('a');
+        // a.href = frame;
+        // a.download = `frame-${framesRef.current.length}.png`;
+        // a.click();
+        setTimeout(() => {
+          resolve(1);
+        }, 200);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
   return (
     <div
       className="CanvasGsap"
@@ -238,6 +349,7 @@ const CanvasGsapAnimation = () => {
           <button onClick={playAnimation}>Play</button>
           <button onClick={pauseResumeTimeline}>Pause</button>
           <button onClick={resetAnimation}>Reset</button>
+          <button onClick={exportVideoTemplate}>Export Video</button>
         </div>
         <div style={{ marginTop: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -259,8 +371,10 @@ const CanvasGsapAnimation = () => {
         <Stage width={CANVAS_WIDTH} height={CANVAS_HEIGHT} onClick={handleSelectElement}>
           <Layer ref={layerRef}>
             <Rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill={'#efefef'} />
-            {elementData.map((props, index) => {
-              return renderElement(props, index);
+            {PAGES.map((page, index) => {
+              return page.children.map((child, childIdx) => {
+                return renderElement(child, childIdx);
+              });
             })}
             {/* <TestText elementIndex={0} elementAnimation={undefined} id={undefined} x={200} y={300} /> */}
           </Layer>

@@ -12,7 +12,6 @@ import CanvasGsapTimeline from './CanvasGsapTimeline.tsx';
 import './index.css';
 import CanvasGsapAnimation from './CanvasGsapAnimation';
 import { GSAPProvider } from './GsapProvider';
-import TestText from './elements/TestText.tsx';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   // <React.StrictMode>

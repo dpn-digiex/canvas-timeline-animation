@@ -10,7 +10,6 @@ gsap.registerPlugin(GSDevTools, PhysicsPropsPlugin, CustomBounce, CustomEase);
 CustomEase.create('rise', '0.7004830917874396, 0, 0.4669565217391304, 0.9855072463768115');
 
 const GSAPContext = createContext({
-  timelineRef: null,
   timelineStatus: TIMELINE_STATUS.IDLE,
   elapsedTime: 0,
   totalTime: 0,
@@ -20,7 +19,7 @@ const GSAPContext = createContext({
   updateTween: (id: string, newTween: GSAPTween) => {},
   removeTween: (id: string) => {},
   playTimeline: (seekTime?: number) => {},
-  prepareTimeline: (immediatePlay?: boolean) => {},
+  prepareTimeline: () => {},
   resetTimeline: () => {},
   pauseTimeline: () => {},
   resumeTimeline: () => {},
@@ -33,6 +32,7 @@ const GSAPContext = createContext({
   setUpdatedTweenCount: (count: number) => {},
   triggerPreviewAnimation: false,
   setTriggerPreviewAnimation: (trigger: boolean) => {},
+  onUpdateTimeline: () => {},
 });
 
 export const GSAPProvider = ({ children }) => {
@@ -44,76 +44,11 @@ export const GSAPProvider = ({ children }) => {
   const [updatedTweentCount, setUpdatedTweenCount] = useState(0);
 
   const [triggerPreviewAnimation, setTriggerPreviewAnimation] = useState(false);
-  const [immediatePlay, setImmediatePlay] = useState(false);
 
   const timelineRef = useRef(gsap.timeline({ paused: true }));
   const previewRef = useRef(gsap.timeline({ paused: true }));
 
-  const registerTween = (tween, delay) => {
-    timelineRef.current.add(tween, delay);
-  };
-
-  const updateTween = (id, newTween) => {
-    const children = timelineRef.current.getChildren();
-    const index = children.findIndex((t) => t.vars.id === id);
-    if (index !== -1) {
-      timelineRef.current.remove(children[index]);
-      timelineRef.current.add(newTween, children[index].startTime());
-    }
-  };
-
-  const removeTween = (id) => {
-    const children = timelineRef.current.getChildren();
-    const index = children.findIndex((t) => t.vars.id === id);
-    if (index !== -1) {
-      timelineRef.current.remove(children[index]);
-    }
-  };
-
-  const prepareTimeline = (immediatePlay = true) => {
-    setTriggerUpdateTweens(true);
-    setImmediatePlay(immediatePlay);
-  };
-
-  const playTimeline = (seekTime?: number) => {
-    if (seekTime) {
-      timelineRef.current.seek(seekTime).play();
-    } else {
-      timelineRef.current.restart().play();
-    }
-    setUpdatedTweenCount(0);
-    setTriggerUpdateTweens(false);
-    setTimelineStatus(TIMELINE_STATUS.PLAYING);
-  };
-
-  const resetTimeline = () => {
-    timelineRef.current.restart().pause();
-    setTimelineStatus(TIMELINE_STATUS.IDLE);
-  };
-
-  const pauseTimeline = () => {
-    timelineRef.current.pause();
-    setTimelineStatus(TIMELINE_STATUS.PAUSED);
-  };
-
-  const resumeTimeline = () => {
-    timelineRef.current.resume();
-    setTimelineStatus(TIMELINE_STATUS.PLAYING);
-  };
-
-  const clearTimeline = () => {
-    if (timelineRef.current && timelineRef.current.getChildren().length > 0) {
-      timelineRef.current.clear();
-    }
-  };
-
-  const playPreview = () => {
-    previewRef.current.clear();
-    previewRef.current.restart().play();
-    previewRef.current.eventCallback('onComplete', () => {
-      previewRef.current.clear();
-    });
-  };
+  const onTimelineUpdateRef = useRef(() => {});
 
   useEffect(() => {
     timelineRef.current = gsap.timeline({
@@ -128,10 +63,7 @@ export const GSAPProvider = ({ children }) => {
         } else if (timelineRef.current.progress() === 1) {
           setTimelineStatus(TIMELINE_STATUS.COMPLETED);
         }
-        const event = new CustomEvent('onUpdateGsapTimeline', {
-          detail: { progress: timelineRef.current.progress() },
-        });
-        window.dispatchEvent(event);
+        onTimelineUpdateRef.current();
       },
       onComplete: () => {
         setTimelineStatus(TIMELINE_STATUS.COMPLETED);
@@ -143,36 +75,14 @@ export const GSAPProvider = ({ children }) => {
     };
   }, []);
 
-  useEffect(() => {
-    if (updatedTweentCount && updatedTweentCount === timelineRef.current.getChildren().length && immediatePlay) {
-      playTimeline();
-    }
-  }, [updatedTweentCount]);
-
-  useEffect(() => {
-    if (timelineRef.current) {
-      timelineRef.current.progress(progress / 100);
-    }
-  }, [progress]);
-
   return (
     <GSAPContext.Provider
       value={{
-        timelineRef: timelineRef.current,
         timelineStatus: timelineStatus,
         elapsedTime: timelineRef.current.time(),
         totalTime: timelineRef.current.totalDuration(),
         isPlayingTimeline: timelineRef.current.isActive(),
         isTimelineReady,
-        registerTween,
-        updateTween,
-        removeTween,
-        prepareTimeline,
-        playTimeline,
-        resetTimeline,
-        pauseTimeline,
-        resumeTimeline,
-        clearTimeline,
         triggerUpdateTweens,
         setTriggerUpdateTweens,
         updatedTweentCount,
@@ -181,6 +91,7 @@ export const GSAPProvider = ({ children }) => {
         setProgressTimeline: setProgress,
         triggerPreviewAnimation,
         setTriggerPreviewAnimation,
+        onUpdateTimeline: onTimelineUpdateRef.current,
       }}
     >
       {children}

@@ -1,11 +1,9 @@
 import { useRef, useEffect, useState } from 'react';
-import { Stage, Layer, Circle, Rect, Image, Group } from 'react-konva';
+import { Stage, Layer, Circle, Rect } from 'react-konva';
 import { gsap } from 'gsap';
-import Whammy from 'react-whammy';
-import useImage from 'use-image';
-import { getAnimationConfig } from './animation/config';
+import { downloadVideo } from './utils';
 
-const totalTime = 5;
+const TOTAL_TIME_TEMPLATE = 5;
 const FPS = 30;
 const INTERVAL_DURATION_MS = 1 / FPS;
 const DURATION = 1.5;
@@ -40,7 +38,6 @@ const CanvasGsapTimeline = () => {
   const [progress, setProgress] = useState(0);
   const [isCapturing, setIsCapturing] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [direction, setDirection] = useState('direction_up');
 
   const layerRef = useRef(null);
   const framesRef = useRef([]);
@@ -60,8 +57,8 @@ const CanvasGsapTimeline = () => {
         firstInit.current = false;
       }
 
-      const captureAndAdvance = async () => {
-        if (elapsedTime < totalTime) {
+      const requestCapture = async () => {
+        if (elapsedTime < TOTAL_TIME_TEMPLATE) {
           await captureFrame(layerRef.current).then(() => {
             setElapsedTime((prev) => +(prev + INTERVAL_DURATION_MS).toFixed(2));
           });
@@ -72,7 +69,7 @@ const CanvasGsapTimeline = () => {
         }
       };
 
-      frameId.current = requestAnimationFrame(captureAndAdvance);
+      frameId.current = requestAnimationFrame(requestCapture);
       return () => cancelAnimationFrame(frameId.current);
     }
   }, [isCapturing, elapsedTime]);
@@ -83,69 +80,14 @@ const CanvasGsapTimeline = () => {
     }
   }, [progress, tl]);
 
-  const createVideoFromFrames = (frames, fps = FPS) => {
-    return new Promise((resolve, reject) => {
-      try {
-        const whammy = new Whammy.Video(fps);
-        const imagePromises = frames.map((frame) => {
-          return new Promise((resolve, reject) => {
-            if (typeof frame === 'string' && frame.startsWith('data:image/')) {
-              resolve(frame);
-            } else {
-              const img = new Image();
-              img.src = frame;
-              img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                context.drawImage(img, 0, 0);
-                const dataURI = canvas.toDataURL('image/webp');
-                resolve(dataURI);
-              };
-              img.onerror = () => {
-                reject();
-              };
-            }
-          });
-        });
-
-        Promise.all(imagePromises)
-          .then((images) => {
-            images.forEach((img) => {
-              whammy.add(img);
-            });
-            whammy.compile(false, (output) => {
-              const url = URL.createObjectURL(output);
-              resolve(url);
-            });
-          })
-          .catch(reject);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  };
-
-  const downloadVideo = async (frames, filename) => {
-    const videoUrl = await createVideoFromFrames(frames);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = videoUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(videoUrl);
-  };
-
   const captureFrame = async (canvas) => {
     return new Promise((resolve) => {
       const seekTime = +((elapsedTime * tl.duration()) / totalTimeAnime).toFixed(2);
-      if (seekTime <= totalTime) {
+      if (seekTime <= TOTAL_TIME_TEMPLATE) {
         tl.seek(seekTime, false); // Seek to the specific time without playing
-        console.log('seeking to: ', seekTime, `/${totalTime}`);
+        console.log('seeking to: ', seekTime, `/${TOTAL_TIME_TEMPLATE}`);
       }
-      const frame = canvas.toDataURL({ mimeType: 'image/png' });
+      const frame = canvas.toDataURL({ mimeType: 'image/webp' });
       framesRef.current.push(frame);
       // const a = document.createElement("a");
       // a.href = frame;
@@ -153,7 +95,7 @@ const CanvasGsapTimeline = () => {
       // a.click();
       setTimeout(() => {
         resolve(1);
-      }, 300);
+      }, 100);
     });
   };
 
@@ -234,12 +176,6 @@ const CanvasGsapTimeline = () => {
         <button onClick={playAnimation}>Play</button>
         <button onClick={resetAnimation}>Reset</button>
         <button onClick={startCapture}>Start Capture</button>
-        <select defaultValue={direction} onChange={(e) => setDirection(e.target.value)}>
-          <option value="direction_left">left</option>
-          <option value="direction_right">right</option>
-          <option value="direction_down">down</option>
-          <option value="direction_up">up</option>
-        </select>
       </div>
       <div style={{ marginTop: 20 }}>
         <h4>Timeline Control:</h4>
