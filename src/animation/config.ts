@@ -1,56 +1,68 @@
-import { Power3 } from "gsap";
+import { stagger } from 'animejs';
+import { Power3 } from 'gsap';
 
 export const DIRECTION = {
-  UP: "direction_up",
-  DOWN: "direction_down",
-  LEFT: "direction_left",
-  RIGHT: "direction_right",
+  UP: 'direction_up',
+  DOWN: 'direction_down',
+  LEFT: 'direction_left',
+  RIGHT: 'direction_right',
 };
 
 export const ANIMATION_ID = {
-  NONE: "none",
-  FADE: "fade",
-  WIPE: "wipe",
-  BASELINE: "baseline",
-  RISE: "rise",
-  PAN: "pan",
-  POP: "pop",
-  ZOOM: "zoom",
-  NEON: "neon",
-  BREATH: "breath",
-  TYPEWRITER: "typewriter",
-  ASCEND: "ascend",
+  NONE: 'none',
+  FADE: 'fade',
+  WIPE: 'wipe',
+  BASELINE: 'baseline',
+  RISE: 'rise',
+  PAN: 'pan',
+  POP: 'pop',
+  ZOOM: 'zoom',
+  NEON: 'neon',
+  BREATH: 'breath',
+  TYPEWRITER: 'typewriter',
+  RANDOM_TYPEWRITER: 'random_typewriter',
+
+  ASCEND: 'ascend',
+  REVEAL: 'reveal',
+  BURST: 'burst',
+  SKATE: 'skate',
 };
 
 export const ANIMATION_ANIMATE = {
-  BOTH: "both",
-  ENTER: "enter",
-  EXIT: "exit",
-  ENTER_BOTH: ["enter", "both"],
-  EXIT_BOTH: ["exit", "both"],
+  BOTH: 'both',
+  ENTER: 'enter',
+  EXIT: 'exit',
+  ENTER_BOTH: ['enter', 'both'],
+  EXIT_BOTH: ['exit', 'both'],
 };
 
 export const ANIMATION_SCALE = {
-  IN: "scale_in",
-  OUT: "scale_out",
+  IN: 'scale_in',
+  OUT: 'scale_out',
 };
 
 export const TYPE_WRITING = {
-  ELEMENT: "ELEMENT",
-  WORD: "WORD",
-  CHARACTER: "CHARACTER",
+  ELEMENT: 'ELEMENT',
+  WORD: 'WORD',
+  CHARACTER: 'CHARACTER',
 };
 
-export const ANIMATION_APPLY_SCALE = [
-  ANIMATION_ID.ZOOM,
-  ANIMATION_ID.BREATH,
-]
+export const ANIMATION_APPLY_SCALE = [ANIMATION_ID.ZOOM, ANIMATION_ID.BREATH];
+export const ANIMATION_APPLY_TYPEWRTING = [
+  ANIMATION_ID.TYPEWRITER,
+  ANIMATION_ID.RANDOM_TYPEWRITER,
+
+  ANIMATION_ID.ASCEND,
+  ANIMATION_ID.SKATE,
+  ANIMATION_ID.BURST,
+];
 
 export const ANIMATION_APPLY_DIRECTION = [
   ANIMATION_ID.BASELINE,
   ANIMATION_ID.WIPE,
   ANIMATION_ID.RISE,
-]
+  ANIMATION_ID.REVEAL,
+];
 
 export const NEON = {
   LOOP: 8,
@@ -63,17 +75,17 @@ export const NEON = {
     { opacity: 1 },
     { opacity: 0 },
     { opacity: 1 },
-  ]
+  ],
 };
 
 export const dRise = 200;
 export const dPan = 200;
 
 export const TIMELINE_STATUS = {
-  IDLE: "idle",
-  PLAYING: "playing",
-  PAUSED: "paused",
-  COMPLETED: "completed",
+  IDLE: 'idle',
+  PLAYING: 'playing',
+  PAUSED: 'paused',
+  COMPLETED: 'completed',
 };
 
 export const getAnimationEnterConfig = (type, defaultProps, properties) => {
@@ -86,7 +98,7 @@ export const getAnimationEnterConfig = (type, defaultProps, properties) => {
         to: {
           opacity: 1,
           ease: Power3.easeIn,
-          duration: properties.duration
+          duration: properties.duration,
         },
       };
     case ANIMATION_ID.RISE:
@@ -101,14 +113,14 @@ export const getAnimationEnterConfig = (type, defaultProps, properties) => {
           }[properties?.direction || DIRECTION.UP],
         },
         to: { ...defaultProps, ease: 'rise', duration: properties.duration },
-      }
+      };
     case ANIMATION_ID.PAN:
       return {
         from: {
-          x: defaultProps.x - dRise
+          x: defaultProps.x - dRise,
         },
         to: { x: defaultProps.x, ease: 'rise', duration: properties.duration },
-      }
+      };
     case ANIMATION_ID.BASELINE:
       return {
         from: {
@@ -233,7 +245,7 @@ export const getAnimationEnterConfig = (type, defaultProps, properties) => {
           scaleX: 1.2,
           scaleY: 1.2,
           duration: 5,
-          ease: "power3.out",
+          ease: 'power3.out',
         },
       };
 
@@ -260,7 +272,7 @@ export const getAnimationEnterConfig = (type, defaultProps, properties) => {
           ...defaultProps,
           scaleX: 1,
           scaleY: 1,
-          duration: 3,
+          duration: 5,
         },
       };
 
@@ -270,17 +282,127 @@ export const getAnimationEnterConfig = (type, defaultProps, properties) => {
         to: {
           opacity: 1,
           repeat: 10,
-          ease: "power1.inOut",
+          ease: 'power1.inOut',
           duration: +(properties.duration / 10).toFixed(2),
           yoyo: true,
-        }
+        },
       };
+    case ANIMATION_ID.TYPEWRITER:
+      return {
+        from: {
+          ...defaultProps,
 
+          opacity: 0,
+        },
+        to: {
+          ...defaultProps,
+          opacity: 1,
+          ease: 'power1.inOut',
+          stagger: {
+            amount: properties.duration,
+          },
+        },
+      };
+    case ANIMATION_ID.ASCEND:
+      return {
+        from: {
+          ...defaultProps,
+          opacity: 0,
+          offsetY: -defaultProps.fontSize,
+        },
+        to: {
+          ...defaultProps,
+          ease: 'ascend',
+
+          opacity: 1,
+          offsetY: 0,
+          stagger: { amount: properties.duration },
+          duration: properties.duration,
+        },
+      };
+    case ANIMATION_ID.BURST:
+      return {
+        from: {
+          ...defaultProps,
+          offsetX: '-50%',
+          offsetY: '-50%',
+          opacity: 0,
+          scaleX: 0,
+          scaleY: 0,
+        },
+        to: {
+          ...defaultProps,
+          scaleX: 1,
+          scaleY: 1,
+          opacity: 1,
+          ease: 'burst',
+          stagger: 0.1,
+        },
+      };
+    case ANIMATION_ID.SKATE:
+      return {
+        from: {
+          ...defaultProps,
+          rotation: -30,
+          opacity: 0,
+          offsetX: -30,
+        },
+        to: {
+          ...defaultProps,
+
+          rotation: 0,
+          opacity: 1,
+          // ease: 'burst',
+          stagger: 0.2,
+        },
+      };
+    case ANIMATION_ID.RANDOM_TYPEWRITER:
+      return {
+        from: {
+          ...defaultProps,
+
+          opacity: 0,
+        },
+        to: {
+          ...defaultProps,
+          opacity: 1,
+          ease: 'power1.inOut',
+          stagger: {
+            amount: properties.duration,
+            from: 'random',
+          },
+        },
+      };
+    case ANIMATION_ID.REVEAL:
+      return {
+        from: {
+          ...defaultProps,
+          ...{
+            [DIRECTION.UP]: {
+              y: defaultProps.height * 0.5,
+            },
+            [DIRECTION.DOWN]: {
+              y: -defaultProps.height * 0.5,
+            },
+            [DIRECTION.LEFT]: {
+              x: defaultProps.width * 0.5,
+            },
+            [DIRECTION.RIGHT]: {
+              x: -defaultProps.width * 0.5,
+            },
+          }[properties?.direction || DIRECTION.RIGHT],
+        },
+        to: {
+          ...defaultProps,
+
+          duration: properties.duration,
+        },
+      };
     default:
       return {
         from: defaultProps,
         to: defaultProps,
-      }
+      };
   }
 };
 
@@ -294,7 +416,7 @@ export const getAnimationExitConfig = (type, defaultProps, properties) => {
         to: {
           opacity: 0,
           ease: Power3.easeOut,
-          duration: properties.duration
+          duration: properties.duration,
         },
       };
     case ANIMATION_ID.RISE:
@@ -309,9 +431,9 @@ export const getAnimationExitConfig = (type, defaultProps, properties) => {
             [DIRECTION.RIGHT]: { x: defaultProps.x + dRise },
           }[properties?.direction || DIRECTION.UP],
           ease: 'rise',
-          duration: properties.duration
+          duration: properties.duration,
         },
-      }
+      };
     case ANIMATION_ID.PAN:
       return {
         from: defaultProps,
@@ -319,9 +441,9 @@ export const getAnimationExitConfig = (type, defaultProps, properties) => {
           opacity: 0,
           x: defaultProps.x + dPan,
           ease: 'rise',
-          duration: properties.duration
+          duration: properties.duration,
         },
-      }
+      };
     case ANIMATION_ID.BASELINE:
       return {
         from: {
@@ -478,16 +600,43 @@ export const getAnimationExitConfig = (type, defaultProps, properties) => {
         to: {
           opacity: 0,
           repeat: 10,
-          ease: "power1.inOut",
+          ease: 'power1.inOut',
           duration: +(properties.duration / 10).toFixed(2),
           yoyo: true,
-        }
+        },
+      };
+
+    case ANIMATION_ID.TYPEWRITER:
+      return {
+        from: { opacity: 0 },
+        to: {
+          opacity: 1,
+          ease: 'power1.inOut',
+          stagger: 0.2,
+          yoyo: true,
+        },
+      };
+    case ANIMATION_ID.ASCEND:
+      return {
+        from: {
+          ...defaultProps,
+          opacity: 0,
+          offsetY: -defaultProps.fontSize,
+        },
+        to: {
+          ...defaultProps,
+
+          opacity: 1,
+          offsetY: 0,
+          stagger: 0.2,
+          duration: properties.duration,
+        },
       };
 
     default:
       return {
         from: defaultProps,
         to: defaultProps,
-      }
+      };
   }
 };

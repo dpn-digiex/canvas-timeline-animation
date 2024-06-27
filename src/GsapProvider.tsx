@@ -8,7 +8,8 @@ import { CustomBounce } from 'gsap/CustomBounce';
 
 gsap.registerPlugin(GSDevTools, PhysicsPropsPlugin, CustomBounce, CustomEase);
 CustomEase.create('rise', '0.7004830917874396, 0, 0.4669565217391304, 0.9855072463768115');
-
+CustomEase.create('burst', '.17,.67,.48,1.75');
+CustomEase.create('ascend', 'M0,0 C0.11,0.494 0.034,0.792 0.16,0.918 0.292,1.05 0.504,1 1,1 ');
 const GSAPContext = createContext({
   timelineRef: null,
   timelineStatus: TIMELINE_STATUS.IDLE,
@@ -33,6 +34,8 @@ const GSAPContext = createContext({
   setUpdatedTweenCount: (count: number) => {},
   triggerPreviewAnimation: false,
   setTriggerPreviewAnimation: (trigger: boolean) => {},
+  readyNextFrame: false,
+  setReadyNextFrame: (ready: boolean) => {},
 });
 
 export const GSAPProvider = ({ children }) => {
@@ -45,6 +48,7 @@ export const GSAPProvider = ({ children }) => {
 
   const [triggerPreviewAnimation, setTriggerPreviewAnimation] = useState(false);
   const [immediatePlay, setImmediatePlay] = useState(false);
+  const [readyNextFrame, setReadyNextFrame] = useState(false);
 
   const timelineRef = useRef(gsap.timeline({ paused: true }));
   const previewRef = useRef(gsap.timeline({ paused: true }));
@@ -181,6 +185,8 @@ export const GSAPProvider = ({ children }) => {
         setProgressTimeline: setProgress,
         triggerPreviewAnimation,
         setTriggerPreviewAnimation,
+        readyNextFrame,
+        setReadyNextFrame,
       }}
     >
       {children}

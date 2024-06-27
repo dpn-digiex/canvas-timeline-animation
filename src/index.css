@@ -58,6 +58,14 @@ button:hover {
   border-color: #646cff;
 }
 
+input[type='text'] {
+  border-radius: 8px;
+  border: 1px solid #1a1a1a;
+  padding: 4px;
+  background-color: #fff;
+  color: #1a1a1a;
+}
+
 /* button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;

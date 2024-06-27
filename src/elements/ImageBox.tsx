@@ -22,7 +22,7 @@ const GROUP_IMAGE_ATTRS_01 = {
   clipHeight: IMAGE_HEIGHT_ELEMENT,
 };
 
-const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected }) => {
+const ImageBox = ({ elementIndex, elementAnimation, visible, id, x, y, src, isSelected }) => {
   const [groupPosition, setGroupPosition] = useState({ x: x, y: y });
 
   const groupRef = useRef(null);
@@ -130,7 +130,6 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       id: id,
       immediateRender: false,
       onStart: () => {
-        // console.log('start animation of element', elementIndex);
         setAnimating(true);
       },
       onUpdate: () => {
@@ -152,15 +151,17 @@ const ImageBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       {...groupAttrs}
       onDragMove={handleGroupDragMove}
       {...((preparing || finished) && !animating && { opacity: 0 })}
+      visible={visible}
     >
       <Image ref={imageRef} {...imageAttrs} />
+
       {isSelected && (
         <Rect
           x={-5}
           y={-5}
           width={IMAGE_WIDTH_ELEMENT + 10}
           height={IMAGE_HEIGHT_ELEMENT + 10}
-          stroke="orange"
+          stroke="blue"
           strokeWidth={15}
         />
       )}

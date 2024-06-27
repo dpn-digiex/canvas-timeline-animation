@@ -14,9 +14,10 @@ import CanvasGsapAnimation from './CanvasGsapAnimation';
 import { GSAPProvider } from './GsapProvider';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  // <React.StrictMode>
-  <GSAPProvider>
-    <CanvasGsapAnimation />
-  </GSAPProvider>,
-  // </React.StrictMode>,
+  <React.StrictMode>
+    <GSAPProvider>
+      <CanvasGsapAnimation />
+    </GSAPProvider>
+    ,
+  </React.StrictMode>,
 );

@@ -5,9 +5,6 @@ import { gsap } from 'gsap';
 import { ANIMATION_ID, getAnimationEnterConfig, getAnimationExitConfig } from '../animation/config';
 import Konva from 'konva';
 
-const VIDEO_WIDTH_ELEMENT = 200;
-const VIDEO_HEIGHT_ELEMENT = 300;
-
 const GROUP_VIDEO_ATTRS_01 = {
   scaleX: 1,
   scaleY: 1,
@@ -16,21 +13,30 @@ const GROUP_VIDEO_ATTRS_01 = {
   offsetY: 0,
   clipX: 0,
   clipY: 0,
-  width: VIDEO_WIDTH_ELEMENT,
-  height: VIDEO_HEIGHT_ELEMENT,
-  clipWidth: VIDEO_WIDTH_ELEMENT,
-  clipHeight: VIDEO_HEIGHT_ELEMENT,
 };
 
-const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected }) => {
+const VideoBox = ({
+  elementIndex,
+  elementAnimation,
+  id,
+  x,
+  y,
+  src,
+  width,
+  height,
+  isSelected,
+  visible,
+  isExportVideo,
+  currentTimeCapture,
+}) => {
   const [groupPosition, setGroupPosition] = useState({ x: x, y: y });
   const [videoAttrs, setVideoAttrs] = useState({
     x: 0,
     y: 0,
     scaleX: 1,
     scaleY: 1,
-    width: VIDEO_WIDTH_ELEMENT,
-    height: VIDEO_HEIGHT_ELEMENT,
+    width: width,
+    height: width,
   });
 
   const groupRef = useRef(null);
@@ -38,6 +44,10 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
   const statusRef = useRef('loading');
 
   const groupAttrs = {
+    width: width,
+    height: height,
+    clipWidth: width,
+    clipHeight: height,
     ...GROUP_VIDEO_ATTRS_01,
     ...groupPosition,
   };
@@ -56,6 +66,7 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
     setUpdatedTweenCount,
     isTimelineReady,
     isPlayingTimeline,
+    setReadyNextFrame,
   } = useGSAP();
 
   const [animating, setAnimating] = useState(false);
@@ -67,9 +78,9 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
     element.src = src;
     element.crossOrigin = 'anonymous';
     element.muted = true;
-    element.preload = 'auto';
-    element.width = VIDEO_WIDTH_ELEMENT;
-    element.height = VIDEO_HEIGHT_ELEMENT;
+    element.preload = '';
+    element.width = width;
+    element.height = height;
     element.setAttribute('data-canvas', 'video-element');
     return element;
   }, [src]);
@@ -98,12 +109,27 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       console.log('LOADING VIDEO ERROR', err);
     };
 
+    const onTimeUpdate = () => {
+      // console.log('can play video');
+      setReadyNextFrame(true);
+    };
+
+    const onWaiting = () => {
+      console.log("video's waiting for data");
+      setReadyNextFrame(false);
+    };
+
     videoElement.addEventListener('loadedmetadata', onload);
     videoElement.addEventListener('error', onError);
+    videoElement.addEventListener('timeupdate', onTimeUpdate);
+    videoElement.addEventListener('waiting', onWaiting);
+    videoElement.addEventListener('stalled', () => console.log('stalled'));
 
     return () => {
       videoElement.removeEventListener('loadedmetadata', onload);
-      videoElement.addEventListener('error', onError);
+      videoElement.removeEventListener('error', onError);
+      videoElement.removeEventListener('timeupdate', onTimeUpdate);
+      videoElement.removeEventListener('waiting', onWaiting);
     };
   }, [videoElement]);
 
@@ -126,9 +152,9 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
 
   useEffect(() => {
     if (!isPlayingTimeline) {
-      videoElement.currentTime = elapsedTime;
+      videoElement.currentTime = currentTimeCapture;
     }
-  }, [elapsedTime]);
+  }, [currentTimeCapture]);
 
   useEffect(() => {
     return () => {
@@ -232,19 +258,11 @@ const VideoBox = ({ elementIndex, elementAnimation, id, x, y, src, isSelected })
       id={id}
       {...groupAttrs}
       onDragMove={handleGroupDragMove}
+      visible={visible}
       // {...((preparing || finished) && !animating && { opacity: 0 })}
     >
       <Image ref={imageRef} image={videoElement} {...videoAttrs} />
-      {isSelected && (
-        <Rect
-          x={-5}
-          y={-5}
-          width={VIDEO_WIDTH_ELEMENT + 10}
-          height={VIDEO_HEIGHT_ELEMENT + 10}
-          stroke="orange"
-          strokeWidth={15}
-        />
-      )}
+      {isSelected && <Rect x={-5} y={-5} width={width + 10} height={width + 10} stroke="blue" strokeWidth={15} />}
     </Group>
   );
 };
