@@ -16,137 +16,17 @@ import {
 import { IoClose } from 'react-icons/io5';
 import VideoBox from './elements/VideoBox';
 import { downloadVideo } from './utils';
-import Konva from 'konva';
 import TextBox from './elements/TextBox';
-const CANVAS_WIDTH = 1080;
-const CANVAS_HEIGHT = 720;
-const CONTROLS_WIDTH = 350;
-const TOTAL_TIME_TEMPLATE = 6;
-const FPS = 30;
-const INTERVAL_DURATION_MS = 1 / FPS;
-const IMAGE_TYPE = 'png';
-const PAGES = [
-  {
-    pageIndex: 0,
-    pageId: 'page_01',
-    pageDuration: 5,
-    animationsApply: [
-      // {
-      //   id: 'page_01_id_01',
-      //   elementType: 'video',
-      //   animationId: 'fade',
-      //   speed: 1,
-      //   scale: null,
-      // },
-      {
-        id: 'page_01_id_02',
-        elementType: 'image',
-        animationId: 'pop',
-        speed: 1,
-        direction: null,
-        scale: 'scale_in',
-      },
-      {
-        id: 'page_01_id_03',
-        elementType: 'image',
-        animationId: 'zoom',
-        speed: 1,
-        direction: null,
-        scale: 'scale_in',
-      },
-      {
-        id: 'page_01_id_05',
-        elementType: 'image',
-        animationId: 'baseline',
-        speed: 1,
-        direction: 'direction_up',
-        scale: null,
-      },
-      {
-        id: 'page_01_id_04',
-        elementType: 'image',
-        animationId: 'rise',
-        speed: 1,
-        direction: 'direction_up',
-        scale: null,
-      },
-    ],
-    backgroundColor: '#ef8920',
-    children: [
-      {
-        id: 'page_01_id_01',
-        x: 0,
-        y: 0,
-        elementType: 'video',
-        src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Video/adc807d379b1431ebf2c0eea75cd548c.mp4',
-      },
-      {
-        id: 'page_01_id_02',
-        x: 50,
-        y: 100,
-        elementType: 'image',
-        src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
-      },
-      {
-        id: 'page_01_id_03',
-        x: 400,
-        y: 100,
-        elementType: 'image',
-        src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
-      },
-      {
-        id: 'page_01_id_04',
-        x: 300,
-        y: 400,
-        elementType: 'image',
-        src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
-      },
-      {
-        id: 'page_01_id_05',
-        x: 600,
-        y: 400,
-        elementType: 'image',
-        src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
-      },
-    ],
-  },
-  {
-    pageIndex: 1,
-    pageId: 'page_02',
-    pageDuration: 3,
-    animationsApply: [],
-    backgroundColor: '#f0f0f0',
-    children: [
-      // {
-      //   id: 'page_02_id_01',
-      //   x: 600,
-      //   y: 100,
-      //   elementType: 'image',
-      //   src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
-      // },
-      {
-        id: 'page_02_id_02',
-        x: 200,
-        y: 300,
-        elementType: 'text',
-      },
-    ],
-  },
-];
-
-const elementAnimation = {
-  id: '',
-  elementType: '',
-  animationId: ANIMATION_ID.NONE,
-  speed: 0,
-  delay: 0,
-  timing: { enter: null, exit: null },
-  // optional
-  direction: null,
-  scale: null,
-  animate: ANIMATION_ANIMATE.ENTER,
-  typeWriting: TYPE_WRITING.ELEMENT,
-};
+import {
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+  CONTROLS_WIDTH,
+  TOTAL_TIME_TEMPLATE,
+  INTERVAL_DURATION_MS,
+  IMAGE_TYPE,
+  PAGES,
+  elementAnimation,
+} from './animation/data';
 
 const CanvasGsapAnimation = () => {
   const {
@@ -174,14 +54,15 @@ const CanvasGsapAnimation = () => {
   const [animateType, setAnimateType] = useState(ANIMATION_ANIMATE.ENTER);
   const [speed, setSpeed] = useState(1);
   const [sizeTemplate, setSizeTemplate] = useState({ width: CANVAS_WIDTH, height: CANVAS_HEIGHT });
-
   const [isOpenDetailApply, setIsOpenDetailApply] = useState(true);
-
   const [isExportVideo, setIsExportVideo] = useState(false);
-
   const [listPages, setListPages] = useState(PAGES);
   const [activePageId, setActivePageId] = useState(PAGES[1].pageId);
+  const [currentTimeCapture, setCurrentTimeCapture] = useState(0);
 
+  const framesRef = useRef([]);
+  const startProcessExport = useRef(true);
+  const frameId = useRef(null);
   const layerRef = useRef(null);
 
   const pageActive = useMemo(() => {
@@ -353,57 +234,28 @@ const CanvasGsapAnimation = () => {
     updateActivePage({ animationsApply: newPageAnimations });
   };
 
-  const calculateStartTimePage = (pageId: string, availablePages: any) => {
-    if (availablePages?.length === 0 || !availablePages) return 0;
-    let startTime = 0;
-    for (let i = 0; i < availablePages?.length; i++) {
-      if (availablePages[i].id === pageId) break;
-      startTime += availablePages?.[i]?.duration || 0; // Use optional chaining
-    }
-    return +startTime.toFixed(0);
-  };
-
-  const calculateEndTimePage = (pageId: string, availablePages: any) => {
-    if (availablePages?.length === 0 || !availablePages) return 0;
-    let startTime = 0;
-    let indexPage = 0;
-    for (let i = 0; i < availablePages?.length; i++) {
-      if (availablePages[i].id === pageId) {
-        indexPage = i;
-        break;
-      }
-      startTime += availablePages?.[i]?.duration || 0; // Use optional chaining
-    }
-    return +(startTime + availablePages?.[indexPage]?.duration).toFixed(0);
-    // return +(startTime).toFixed(0)
-  };
-
-  const calculateTimeout = (elementsApplied = []) => {
-    if (elementsApplied.length === 0) return 0;
-    let timeout = 0;
-    let delay = 0;
-    elementsApplied.forEach((element) => {
-      if (element.animationId !== ANIMATION_ID.NONE) {
-        timeout = element.speed > timeout ? element.speed : timeout;
-        delay = element.delay && element.delay > delay ? element.delay : delay;
+  const captureFrame = async () => {
+    return new Promise((resolve, reject) => {
+      try {
+        const seekTime = +((currentTimeCapture * tl.duration()) / totalTime).toFixed(2);
+        if (seekTime <= TOTAL_TIME_TEMPLATE) {
+          tl.seek(seekTime, false); // Seek to the specific time without playing
+          console.log('seeking to: ', seekTime, `/${TOTAL_TIME_TEMPLATE}`);
+        }
+        const frame = layerRef.current.toDataURL({ mimeType: `image/${IMAGE_TYPE}` });
+        framesRef.current.push(frame);
+        const a = document.createElement('a');
+        a.href = frame;
+        a.download = `frame-${framesRef.current.length}.${IMAGE_TYPE}`;
+        a.click();
+        setTimeout(() => {
+          resolve(1);
+        }, 300);
+      } catch (error) {
+        reject(error);
       }
     });
-    timeout = timeout + delay;
-    return +timeout.toFixed(0);
   };
-
-  const exportVideoTemplate = () => {
-    setIsExportVideo(true);
-  };
-
-  const [currentTimeCapture, setCurrentTimeCapture] = useState(0);
-  const framesRef = useRef([]);
-  const startProcessExport = useRef(true);
-  const frameId = useRef(null);
-
-  useEffect(() => {
-    // Konva.pixelRatio = 1.5;
-  }, []);
 
   useEffect(() => {
     if (isExportVideo && readyNextFrame) {
@@ -432,43 +284,10 @@ const CanvasGsapAnimation = () => {
     }
   }, [isExportVideo, currentTimeCapture, readyNextFrame]);
 
-  const captureFrame = async () => {
-    return new Promise((resolve, reject) => {
-      try {
-        const seekTime = +((currentTimeCapture * tl.duration()) / totalTime).toFixed(2);
-        if (seekTime <= TOTAL_TIME_TEMPLATE) {
-          tl.seek(seekTime, false); // Seek to the specific time without playing
-          console.log('seeking to: ', seekTime, `/${TOTAL_TIME_TEMPLATE}`);
-        }
-        const frame = layerRef.current.toDataURL({ mimeType: `image/${IMAGE_TYPE}` });
-        framesRef.current.push(frame);
-        const a = document.createElement('a');
-        a.href = frame;
-        a.download = `frame-${framesRef.current.length}.${IMAGE_TYPE}`;
-        a.click();
-        setTimeout(() => {
-          resolve(1);
-        }, 300);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  };
-
   return (
-    <div
-      className="CanvasGsap"
-      style={{
-        marginLeft: 30,
-        marginTop: 30,
-        position: 'relative',
-        width: sizeTemplate.width + 100 + CONTROLS_WIDTH,
-        display: 'flex',
-        gap: 16,
-      }}
-    >
+    <div className="canvas-container">
       <div id="canvas-ground" style={{ width: sizeTemplate.width, position: 'relative' }}>
-        <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+        <div className="controls-container">
           <button onClick={playAnimation}>Play</button>
           <button onClick={pauseResumeTimeline} style={{ width: '120px' }}>
             {timelineStatus === TIMELINE_STATUS.PAUSED ? 'Resume' : 'Pause'}
@@ -476,19 +295,19 @@ const CanvasGsapAnimation = () => {
           <button onClick={resetAnimation}>Reset</button>
           {/* <button onClick={exportVideoTemplate}>Export Video</button> */}
         </div>
-        <div style={{ marginTop: 20 }}>
+        <div className="timeline-info-container">
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <h4 style={{ marginRight: '16px' }}>Template Size:</h4>
             <input
               type="text"
               value={sizeTemplate.width}
-              onChange={(e) => setSizeTemplate({ ...sizeTemplate, width: e.target.value })}
+              onChange={(e) => setSizeTemplate({ ...sizeTemplate, width: +e.target.value })}
             />
             <span style={{ margin: '0 16px' }}>X</span>
             <input
               type="text"
               value={sizeTemplate.height}
-              onChange={(e) => setSizeTemplate({ ...sizeTemplate, height: e.target.value })}
+              onChange={(e) => setSizeTemplate({ ...sizeTemplate, height: +e.target.value })}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -519,17 +338,13 @@ const CanvasGsapAnimation = () => {
           </Layer>
         </Stage>
 
-        <div id="pages-thumb-preview" style={{ display: 'flex', gap: '4px', zIndex: 10, marginTop: 10 }}>
+        <div className="list-page-preview">
           {listPages.map((page, index) => {
             return (
               <div
+                className="page-preview"
                 key={index}
-                style={{
-                  padding: 8,
-                  width: '200px',
-                  cursor: 'pointer',
-                  border: pageActive.pageId === page.pageId ? '1px solid blue' : '1px solid #ccc',
-                }}
+                style={{ border: pageActive.pageId === page.pageId ? '1px solid blue' : '1px solid #ccc' }}
                 onClick={() => setActivePageId(page.pageId)}
               >
                 {`Page ${index + 1} - ${page.pageDuration}s`}
@@ -568,7 +383,7 @@ const CanvasGsapAnimation = () => {
             max={2}
             step={0.1}
             value={speed}
-            onChange={(e) => setSpeed(e.target.value)}
+            onChange={(e) => setSpeed(+e.target.value)}
             style={{ width: '100%' }}
           />
           <>

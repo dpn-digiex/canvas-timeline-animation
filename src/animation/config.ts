@@ -1,4 +1,3 @@
-import { stagger } from 'animejs';
 import { Power3 } from 'gsap';
 
 export const DIRECTION = {

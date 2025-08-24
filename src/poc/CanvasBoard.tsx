@@ -1,5 +1,5 @@
 import { Stage, Layer, Rect } from "react-konva";
-import useAnimation from "./useAnimation";
+import useAnimation from "../useAnimation";
 import { useEffect, useState } from "react";
 import { easings } from "@react-spring/web";
 

@@ -1,4 +1,5 @@
 import Whammy from 'react-whammy';
+import { ANIMATION_ID } from './animation/config';
 
 export const createVideoFromFrames = (frames, fps = 30) => {
   return new Promise((resolve, reject) => {
@@ -55,4 +56,43 @@ export const downloadVideo = async (frames, filename) => {
   document.body.appendChild(a);
   a.click();
   URL.revokeObjectURL(videoUrl);
+};
+
+export const calculateStartTimePage = (pageId: string, availablePages: any) => {
+  if (availablePages?.length === 0 || !availablePages) return 0;
+  let startTime = 0;
+  for (let i = 0; i < availablePages?.length; i++) {
+    if (availablePages[i].id === pageId) break;
+    startTime += availablePages?.[i]?.duration || 0; // Use optional chaining
+  }
+  return +startTime.toFixed(0);
+};
+
+export const calculateEndTimePage = (pageId: string, availablePages: any) => {
+  if (availablePages?.length === 0 || !availablePages) return 0;
+  let startTime = 0;
+  let indexPage = 0;
+  for (let i = 0; i < availablePages?.length; i++) {
+    if (availablePages[i].id === pageId) {
+      indexPage = i;
+      break;
+    }
+    startTime += availablePages?.[i]?.duration || 0; // Use optional chaining
+  }
+  return +(startTime + availablePages?.[indexPage]?.duration).toFixed(0);
+  // return +(startTime).toFixed(0)
+};
+
+export const calculateTimeout = (elementsApplied = []) => {
+  if (elementsApplied.length === 0) return 0;
+  let timeout = 0;
+  let delay = 0;
+  elementsApplied.forEach((element) => {
+    if (element.animationId !== ANIMATION_ID.NONE) {
+      timeout = element.speed > timeout ? element.speed : timeout;
+      delay = element.delay && element.delay > delay ? element.delay : delay;
+    }
+  });
+  timeout = timeout + delay;
+  return +timeout.toFixed(0);
 };

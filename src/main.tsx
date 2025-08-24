@@ -1,13 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import App from './App.tsx';
-import CanvasBoard from './CanvasBoard.tsx';
-import CanvasCapture from './CanvasCapture.tsx';
-import CanvasFramerMotion from './CanvasFramerMotion.tsx';
-import CanvasAnimeJS from './CanvasAnimeJS.tsx';
-
-import CanvasGsapTimeline from './CanvasGsapTimeline.tsx';
+import CanvasBoard from './poc/CanvasBoard.tsx';
+import CanvasCapture from './poc/CanvasCapture.tsx';
+import CanvasFramerMotion from './poc/CanvasFramerMotion.tsx';
+import CanvasAnimeJS from './poc/CanvasAnimeJS.tsx';
+import CanvasGsapTimeline from './poc/CanvasGsapTimeline.tsx';
 
 import './index.css';
 import CanvasGsapAnimation from './CanvasGsapAnimation';

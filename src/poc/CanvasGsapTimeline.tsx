@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Circle, Rect } from 'react-konva';
 import { gsap } from 'gsap';
-import { downloadVideo } from './utils';
+import { downloadVideo } from '../utils';
 
 const TOTAL_TIME_TEMPLATE = 5;
 const FPS = 30;
