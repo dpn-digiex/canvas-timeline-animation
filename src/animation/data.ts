@@ -55,19 +55,23 @@ export const PAGES = [
     ],
     backgroundColor: '#ef8920',
     children: [
-      {
-        id: 'page_01_id_01',
-        x: 0,
-        y: 0,
-        elementType: 'video',
-        src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Video/adc807d379b1431ebf2c0eea75cd548c.mp4',
-      },
+      // {
+      //   id: 'page_01_id_01',
+      //   x: 0,
+      //   y: 0,
+      //   elementType: 'video',
+      //   src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Video/adc807d379b1431ebf2c0eea75cd548c.mp4',
+      //   width: 150,
+      //   height: 100,
+      // },
       {
         id: 'page_01_id_02',
         x: 50,
         y: 100,
         elementType: 'image',
         src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
+        width: 150,
+        height: 100,
       },
       {
         id: 'page_01_id_03',
@@ -75,6 +79,8 @@ export const PAGES = [
         y: 100,
         elementType: 'image',
         src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
+        width: 150,
+        height: 100,
       },
       {
         id: 'page_01_id_04',
@@ -82,6 +88,8 @@ export const PAGES = [
         y: 400,
         elementType: 'image',
         src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/af123eac3ff3469a96cd1bf688e4f3f5.jpg',
+        width: 150,
+        height: 100,
       },
       {
         id: 'page_01_id_05',
@@ -89,6 +97,8 @@ export const PAGES = [
         y: 400,
         elementType: 'image',
         src: 'https://stg-brandelement-static.obello.com/66160212455f272d73304bda/Image/96221dedae1846f3ac58226133062bdf.jpg',
+        width: 150,
+        height: 100,
       },
     ],
   },
